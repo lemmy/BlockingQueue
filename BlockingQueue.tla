@@ -12,8 +12,8 @@ ASSUME /\ Producers # {}                      (* at least one producer *)
        
 -----------------------------------------------------------------------------
 
-VARIABLES buffer, waitSet
-vars == <<buffer, waitSet>>
+VARIABLES buffer, waitSet, thread
+vars == <<buffer, waitSet, thread>>
 
 RunningThreads == (Producers \cup Consumers) \ waitSet
 
@@ -47,14 +47,20 @@ Get(t) ==
 (* Initially, the buffer is empty and no thread is waiting. *)
 Init == /\ buffer = <<>>
         /\ waitSet = {}
+        /\ thread \in (Producers \cup Consumers)
 
 (* Then, pick a thread out of all running threads and have it do its thing. *)
-Next ==
-     \/ Notify /\ UNCHANGED buffer \* At each step notify all waiting threads.
-     \/ \E t \in RunningThreads: \/ /\ t \in Producers
-                                    /\ Put(t, t) \* Add some data to buffer
-                                 \/ /\ t \in Consumers
-                                    /\ Get(t)
+\* Next rewritten to predict the value of a prophecy variable
+\* http://lamport.azurewebsites.net/pubs/auxiliary.pdf
+\* (https://github.com/lorin/tla-prophecy)
+Next == \/ /\ thread \notin waitSet                        \* Pred_A(i)
+           /\ thread' \in (Producers \cup Consumers)       \* Setp
+           /\ \/ /\ thread \in Producers                   \* A
+                 /\ Put(thread, thread) \* Add some data to buffer
+              \/ /\ thread \in Consumers
+                 /\ Get(thread)
+        \/ /\ thread \in waitSet
+           /\ UNCHANGED vars
 
 -----------------------------------------------------------------------------
 
