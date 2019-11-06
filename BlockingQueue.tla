@@ -49,7 +49,9 @@ Init == /\ buffer = <<>>
         /\ waitSet = {}
 
 (* Then, pick a thread out of all running threads and have it do its thing. *)
-Next == \E t \in RunningThreads: \/ /\ t \in Producers
+Next ==
+     \/ Notify /\ UNCHANGED buffer \* At each step notify all waiting threads.
+     \/ \E t \in RunningThreads: \/ /\ t \in Producers
                                     /\ Put(t, t) \* Add some data to buffer
                                  \/ /\ t \in Consumers
                                     /\ Get(t)
