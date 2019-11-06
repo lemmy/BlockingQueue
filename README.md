@@ -13,6 +13,14 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v11 (Bugfix): Non-deterministically notify waiting threads.
+
+Non-deterministically notify waiting threads in an attempt to
+fix the deadlock situation.  This attempt fails because we
+might end up waking the wrong thread up over and over again.
+
+--------------------------------------------------------------------------
+
 ### v10 (Animation): Add visualization of error-traces.
     
 The trace with 2 procs, 1 cons, and a buffer of length 1 is
