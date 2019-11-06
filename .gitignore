@@ -1,0 +1,4 @@
+*.toolbox/
+states/
+*.out
+*.dot
