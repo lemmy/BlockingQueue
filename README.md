@@ -8,6 +8,12 @@ Each [git commit](https://github.com/lemmy/BlockingQueue/commits/tutorial) intro
 
 --------------------------------------------------------------------------
 
+### v08: Non-deterministically notify waiting threads.
+
+Non-deterministically notify waiting threads in an attempt to
+fix the deadlock situation.  This attempt fails because we
+might end up waking the wrong thread up over and over again.
+
 ### v07: Add visualization of error-traces.
     
 The trace with 2 procs, 1 cons, and a buffer of length 1 is
