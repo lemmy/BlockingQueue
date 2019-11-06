@@ -7,6 +7,47 @@ Each [git commit](https://github.com/lemmy/BlockingQueue/commits/tutorial) intro
 [Click here for a zero-install environment to give the TLA+ specification language a try](https://gitpod.io/#https://github.com/lemmy/BlockingQueue).
 
 --------------------------------------------------------------------------
+### v05: Add Invariant to detect deadlocks.
+
+Add Invariant to detect deadlocks (and TypeInv). TLC now finds the deadlock
+for configuration p1c2b1 (see below) as well as the one matching the Java
+app p4c3b3.
+
+```tla
+Error: Invariant Invariant is violated.
+Error: The behavior up to this point is:
+State 1: <Initial predicate>
+/\ buffer = <<>>
+/\ waitSet = {}
+
+State 2: <Next line 52, col 9 to line 55, col 45 of module BlockingQueue>
+/\ buffer = <<>>
+/\ waitSet = {c1}
+
+State 3: <Next line 52, col 9 to line 55, col 45 of module BlockingQueue>
+/\ buffer = <<>>
+/\ waitSet = {c1, c2}
+
+State 4: <Next line 52, col 9 to line 55, col 45 of module BlockingQueue>
+/\ buffer = <<p1>>
+/\ waitSet = {c2}
+
+State 5: <Next line 52, col 9 to line 55, col 45 of module BlockingQueue>
+/\ buffer = <<p1>>
+/\ waitSet = {p1, c2}
+
+State 6: <Next line 52, col 9 to line 55, col 45 of module BlockingQueue>
+/\ buffer = <<>>
+/\ waitSet = {p1}
+
+State 7: <Next line 52, col 9 to line 55, col 45 of module BlockingQueue>
+/\ buffer = <<>>
+/\ waitSet = {p1, c1}
+
+State 8: <Next line 52, col 9 to line 55, col 45 of module BlockingQueue>
+/\ buffer = <<>>
+/\ waitSet = {p1, c1, c2}
+```
 
 ### v04: Debug state graph for configuration p2c1b1.
     
