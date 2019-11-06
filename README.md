@@ -7,6 +7,19 @@ Each [git commit](https://github.com/lemmy/BlockingQueue/commits/tutorial) intro
 [Click here for a zero-install environment to give the TLA+ specification language a try](https://gitpod.io/#https://github.com/lemmy/BlockingQueue).
 
 --------------------------------------------------------------------------
+
+### v06: Add prophecy variable to simplify animation.
+
+The next-state relation has been restated to "predict"
+the value of t (threads) in the successor state. We
+will use the prophecy variable in the following
+commit to come up with an animation.
+    
+This and the following commit can be skipped unless
+you are interested in the more advanced concept of
+prophecy (http://lamport.azurewebsites.net/pubs/auxiliary.pdf)
+or animations (https://youtu.be/mLF220fPrP4).
+
 ### v05: Add Invariant to detect deadlocks.
 
 Add Invariant to detect deadlocks (and TypeInv). TLC now finds the deadlock
