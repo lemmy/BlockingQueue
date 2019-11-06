@@ -1,8 +1,4 @@
 --------------------------- MODULE BlockingQueue ---------------------------
-(***************************************************************************)
-(* Original problem and spec by Michel Charpentier                         *)
-(* http://www.cs.unh.edu/~charpov/programming-tlabuffer.html               *)
-(***************************************************************************)
 EXTENDS Naturals, Sequences, FiniteSets
 
 CONSTANTS Producers,   (* the (nonempty) set of producers                       *)
@@ -58,5 +54,15 @@ Next == \E t \in RunningThreads: \/ /\ t \in Producers
                                     /\ Put(t, t) \* Add some data to buffer
                                  \/ /\ t \in Consumers
                                     /\ Get(t)
+
+-----------------------------------------------------------------------------
+
+(* TLA+ is untyped, thus lets verify the range of some values in each state. *)
+TypeInv == /\ buffer \in Seq(Producers)
+           /\ Len(buffer) \in 0..BufCapacity
+           /\ waitSet \subseteq (Producers \cup Consumers)
+
+(* No Deadlock *)
+Invariant == waitSet # (Producers \cup Consumers)
 
 =============================================================================

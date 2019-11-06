@@ -12,6 +12,83 @@ Click either one of the buttons to launch a zero-install IDE to give the TLA+ sp
 This tutorial is work in progress. More chapters will be added in the future. In the meantime, feel free to open issues with questions, clarifications, and recommendations. You can also reach out to me on [twitter](https://twitter.com/lemmster).  Basic TLA+ learning material can be found over at [Lamport's TLA+ page](http://lamport.azurewebsites.net/tla/learning.html).
 
 --------------------------------------------------------------------------
+### v05: Add Invariant to detect deadlocks.
+
+Add Invariant to detect deadlocks (and TypeInv). TLC now finds the deadlock
+for configuration p1c2b1 (see below) as well as the one matching the Java
+app p4c3b3.
+
+```tla
+Error: Invariant Invariant is violated.
+Error: The behavior up to this point is:
+State 1: <Initial predicate>
+/\ buffer = <<>>
+/\ waitSet = {}
+
+State 2: <Next line 52, col 9 to line 55, col 45 of module BlockingQueue>
+/\ buffer = <<>>
+/\ waitSet = {c1}
+
+State 3: <Next line 52, col 9 to line 55, col 45 of module BlockingQueue>
+/\ buffer = <<>>
+/\ waitSet = {c1, c2}
+
+State 4: <Next line 52, col 9 to line 55, col 45 of module BlockingQueue>
+/\ buffer = <<p1>>
+/\ waitSet = {c2}
+
+State 5: <Next line 52, col 9 to line 55, col 45 of module BlockingQueue>
+/\ buffer = <<p1>>
+/\ waitSet = {p1, c2}
+
+State 6: <Next line 52, col 9 to line 55, col 45 of module BlockingQueue>
+/\ buffer = <<>>
+/\ waitSet = {p1}
+
+State 7: <Next line 52, col 9 to line 55, col 45 of module BlockingQueue>
+/\ buffer = <<>>
+/\ waitSet = {p1, c1}
+
+State 8: <Next line 52, col 9 to line 55, col 45 of module BlockingQueue>
+/\ buffer = <<>>
+/\ waitSet = {p1, c1, c2}
+```
+
+Note that the Java app with p2c1b1 usually deadlocks only after it produced thousands of lines of log statements, which is considerably longer than the error trace above.  This makes it more difficult to understand the root cause of the deadlock.  For config p4c3b3, the C program has a high chance to deadlock after a few minutes and a couple million cycles of the consumer loop. 
+
+Sidenote: Compare the complexity of the behavior described in [Challenge 14](http://wiki.c2.com/?ExtremeProgrammingChallengeFourteenTheBug) of the c2 extreme programming wiki for configuration p2c2b1 with the TLA+ behavior below.  The explanation in the wiki requires 15 steps, whereas - for p2c2b1 - TLC already finds a deadlock after 9 states (and two more after 11 states).
+
+```tla
+Invariant Invariant is violated.
+The behavior up to this point is:
+1: <Initial predicate>
+/\ buffer = <<>>
+/\ waitSet = {}
+2: <Next line 53, col 9 to line 56, col 45 of module BlockingQueue>
+/\ buffer = <<>>
+/\ waitSet = {c2}
+3: <Next line 53, col 9 to line 56, col 45 of module BlockingQueue>
+/\ buffer = <<>>
+/\ waitSet = {c1, c2}
+4: <Next line 53, col 9 to line 56, col 45 of module BlockingQueue>
+/\ buffer = <<p1>>
+/\ waitSet = {c2}
+5: <Next line 53, col 9 to line 56, col 45 of module BlockingQueue>
+/\ buffer = <<p1>>
+/\ waitSet = {p1, c2}
+6: <Next line 53, col 9 to line 56, col 45 of module BlockingQueue>
+/\ buffer = <<p1>>
+/\ waitSet = {p1, p2, c2}
+7: <Next line 53, col 9 to line 56, col 45 of module BlockingQueue>
+/\ buffer = <<>>
+/\ waitSet = {p1, p2}
+8: <Next line 53, col 9 to line 56, col 45 of module BlockingQueue>
+/\ buffer = <<>>
+/\ waitSet = {p1, p2, c1}
+9: <Next line 53, col 9 to line 56, col 45 of module BlockingQueue>
+/\ buffer = <<>>
+/\ waitSet = {p1, p2, c1, c2}
+```
 
 ### v04: Debug state graph for configuration p2c1b1.
     
