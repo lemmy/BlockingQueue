@@ -13,6 +13,16 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v12 (Bugfix): Always notify all waiting threads.
+
+Always notify all waiting threads instead of a non-deterministically
+selected one.  This fixes the deadlock bug but at a price: Load will
+spike when all (suspended) threads wake up at once.
+
+As a bonus exercise, check if it necessary to notify all waiting threads in both ```Put``` and ```Get```.
+
+Note that this is the proposed solution to the bug in [Challenge 14](http://wiki.c2.com/?ExtremeProgrammingChallengeFourteen) of the c2 extreme programming wiki.  To the best of my knowledge, not a single comment mentions that just one ```notifyAll``` suffices. Neither does anybody mention a more elegant fix that has no performance implications (see next step).
+
 ### v11 (Bugfix): Non-deterministically notify waiting threads.
 
 Non-deterministically notify waiting threads in an attempt to
