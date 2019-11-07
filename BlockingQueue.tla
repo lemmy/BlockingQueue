@@ -18,10 +18,7 @@ vars == <<buffer, waitSet>>
 
 RunningThreads == (Producers \cup Consumers) \ waitSet
 
-(* @see java.lang.Object#notify *)       
-Notify == IF waitSet # {}
-          THEN \E x \in waitSet: waitSet' = waitSet \ {x}
-          ELSE UNCHANGED waitSet
+NotifyAll == waitSet' = {}
 
 (* @see java.lang.Object#wait *)
 Wait(t) == /\ waitSet' = waitSet \cup {t}
@@ -32,14 +29,14 @@ Wait(t) == /\ waitSet' = waitSet \cup {t}
 Put(t, d) ==
    \/ /\ Len(buffer) < BufCapacity
       /\ buffer' = Append(buffer, d)
-      /\ Notify
+      /\ NotifyAll
    \/ /\ Len(buffer) = BufCapacity
       /\ Wait(t)
       
 Get(t) ==
    \/ /\ buffer # <<>>
       /\ buffer' = Tail(buffer)
-      /\ Notify
+      /\ NotifyAll
    \/ /\ buffer = <<>>
       /\ Wait(t)
 
@@ -50,9 +47,7 @@ Init == /\ buffer = <<>>
         /\ waitSet = {}
 
 (* Then, pick a thread out of all running threads and have it do its thing. *)
-Next ==
-     \/ Notify /\ UNCHANGED buffer \* At each step notify all waiting threads.
-     \/ \E t \in RunningThreads: \/ /\ t \in Producers
+Next == \E t \in RunningThreads: \/ /\ t \in Producers
                                     /\ Put(t, t) \* Add some data to buffer
                                  \/ /\ t \in Consumers
                                     /\ Get(t)
