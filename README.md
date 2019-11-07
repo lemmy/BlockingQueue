@@ -8,6 +8,12 @@ Each [git commit](https://github.com/lemmy/BlockingQueue/commits/tutorial) intro
 
 --------------------------------------------------------------------------
 
+### v09: Always notify all waiting threads.
+
+Always notify all waiting threads instead of a non-deterministically
+selected one.  This fixes the deadlock bug but at a price: Load wil
+spike when all (suspended) threads wake up at once.
+
 ### v08: Non-deterministically notify waiting threads.
 
 Non-deterministically notify waiting threads in an attempt to
