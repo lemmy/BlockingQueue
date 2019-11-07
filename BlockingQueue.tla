@@ -65,4 +65,12 @@ TypeInv == /\ buffer \in Seq(Producers)
 (* No Deadlock *)
 Invariant == waitSet # (Producers \cup Consumers)
 
+-----------------------------------------------------------------------------
+
+Spec == Init /\ [][Next]_vars /\ WF_vars(Next)
+
+(* All producers will continuously be serviced. *)
+ASSUME Cardinality(Producers) > 1 \* Mental note that starvation requires two or more producers.
+Starvation == \A p \in Producers: []<>(<<Put(p, p)>>_vars)
+
 =============================================================================
