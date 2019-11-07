@@ -1,9 +1,10 @@
 --------------------------- MODULE BlockingQueue ---------------------------
-EXTENDS Naturals, Sequences, FiniteSets
+EXTENDS Naturals, Sequences, FiniteSets, TLC
 
 CONSTANTS Producers,   (* the (nonempty) set of producers                       *)
           Consumers,   (* the (nonempty) set of consumers                       *)
-          BufCapacity  (* the maximum number of messages in the bounded buffer  *)
+          BufCapacity, (* the maximum number of messages in the bounded buffer  *)
+          Data
 
 ASSUME Assumption ==
        /\ Producers # {}                      (* at least one producer *)
@@ -57,7 +58,7 @@ Init == /\ buffer = <<>>
 Next == \/ /\ thread \notin waitSet                        \* Pred_A(i)
            /\ thread' \in (Producers \cup Consumers)       \* Setp
            /\ \/ /\ thread \in Producers                   \* A
-                 /\ Put(thread, thread) \* Add some data to buffer
+                 /\ Put(thread, RandomElement(Data)) \* Add some data to buffer
               \/ /\ thread \in Consumers
                  /\ Get(thread)
         \/ /\ thread \in waitSet
@@ -66,7 +67,7 @@ Next == \/ /\ thread \notin waitSet                        \* Pred_A(i)
 -----------------------------------------------------------------------------
 
 (* TLA+ is untyped, thus lets verify the range of some values in each state. *)
-TypeInv == /\ buffer \in Seq(Producers)
+TypeInv == /\ buffer \in Seq(Data)
            /\ Len(buffer) \in 0..BufCapacity
            /\ waitSet \subseteq (Producers \cup Consumers)
 
