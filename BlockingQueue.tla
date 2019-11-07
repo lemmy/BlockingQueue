@@ -1,9 +1,10 @@
 --------------------------- MODULE BlockingQueue ---------------------------
-EXTENDS Naturals, Sequences, FiniteSets
+EXTENDS Naturals, Sequences, FiniteSets, TLC
 
 CONSTANTS Producers,   (* the (nonempty) set of producers                       *)
           Consumers,   (* the (nonempty) set of consumers                       *)
-          BufCapacity  (* the maximum number of messages in the bounded buffer  *)
+          BufCapacity, (* the maximum number of messages in the bounded buffer  *)
+          Data
 
 ASSUME /\ Producers # {}                      (* at least one producer *)
        /\ Consumers # {}                      (* at least one consumer *)
@@ -56,7 +57,7 @@ Init == /\ buffer = <<>>
 Next == \/ /\ thread \notin waitSet                        \* Pred_A(i)
            /\ thread' \in (Producers \cup Consumers)       \* Setp
            /\ \/ /\ thread \in Producers                   \* A
-                 /\ Put(thread, thread) \* Add some data to buffer
+                 /\ Put(thread, RandomElement(Data)) \* Add some data to buffer
               \/ /\ thread \in Consumers
                  /\ Get(thread)
         \/ /\ thread \in waitSet
