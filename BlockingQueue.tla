@@ -18,7 +18,10 @@ vars == <<buffer, waitSet>>
 
 RunningThreads == (Producers \cup Consumers) \ waitSet
 
-NotifyAll == waitSet' = {}
+NotifyOther(Others) == 
+    IF waitSet \cap Others # {}
+    THEN \E t \in waitSet \cap Others : waitSet' = waitSet \ {t}
+    ELSE UNCHANGED waitSet
 
 (* @see java.lang.Object#wait *)
 Wait(t) == /\ waitSet' = waitSet \cup {t}
@@ -29,14 +32,14 @@ Wait(t) == /\ waitSet' = waitSet \cup {t}
 Put(t, d) ==
    \/ /\ Len(buffer) < BufCapacity
       /\ buffer' = Append(buffer, d)
-      /\ NotifyAll
+      /\ NotifyOther(Consumers)
    \/ /\ Len(buffer) = BufCapacity
       /\ Wait(t)
       
 Get(t) ==
    \/ /\ buffer # <<>>
       /\ buffer' = Tail(buffer)
-      /\ NotifyAll
+      /\ NotifyOther(Producers)
    \/ /\ buffer = <<>>
       /\ Wait(t)
 

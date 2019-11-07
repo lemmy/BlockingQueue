@@ -13,6 +13,17 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v13 (Bugfix): (Logically) two mutexes.
+
+Remove notifyAll and instead introduce two mutexes (one for Producers
+and one for Consumers).  A Consumer will notify the subset of
+Producers waiting on the Producer mutex (vice versa for a Producer).
+    
+The spec does not have to introduce two mutexes.  Instead, we can
+just pick the right thread type from the set of waiting threads.
+    
+This fix completely solves the bug, but are we fully satisfied yet?
+
 ### v12 (Bugfix): Always notify all waiting threads.
 
 Always notify all waiting threads instead of a non-deterministically
