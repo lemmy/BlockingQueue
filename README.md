@@ -13,6 +13,33 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v10 (Animation): Add visualization of error-traces.
+    
+The trace with 2 procs, 1 cons, and a buffer of length 1 is
+minimal (length 8).  The other trace shows how quickly the
+issue becomes a) incomprehensible and b) the length of the
+trace increases (46 states for 7 threads).  TLC takes 75 secs
+on my machine to check this.
+
+![Animation for configuration p2c1b1](animation/BlockingQueue-Proc2_Cons1_Buff1_Len08.gif)
+
+![Animation for configuration p4c3b3](animation/BlockingQueue-Proc4_Cons3_Buff3_Len46.gif)
+
+The animations are created in the Toolbox with:
+
+1. Check model [BlockingQueue.cfg](BlockingQueue.cfg)
+2. Set ```Animation``` as the trace expression in the Error-Trace console
+3. Hit Explore and export/copy the resulting trace to clipboard
+4. Paste into http://localhost:10996/files/animator.html
+
+Without the Toolbox, something similar to this:
+
+1. Check model [BlockingQueue.cfg](BlockingQueue.cfg) with ```java -jar tla2tools.jar -deadlock -generateSpecTE BlockingQueue``` ('-generateSpecTE' causes TLC to generate [SpecTE.tla](SpecTE.tla)/.cfg)
+2. State trace expression ```Animation``` ([BlockingQueueAnim.tla](BlockingQueueAnim.tla))in SpecTE.tla
+3. Download https://github.com/tlaplus/CommunityModules/releases/download/20200107.1/CommunityModules-202001070430.jar
+4. Check SpecTE with ```java -jar tla2tools.jar:CommunityModules-202001070430.jar tlc2.TLC SpecTE```
+5. Copy trace into http://localhost:10996/files/animator.html (minor format changes needed)
+
 ### v09 (Animation): Add prophecy variable to simplify animation.
 
 The next-state relation has been restated to "predict"
