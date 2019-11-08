@@ -1,0 +1,9 @@
+*.toolbox/
+*.tlaps/
+states/
+*.out
+*.dot
+.vscode/
+build/
+.classpath
+.project

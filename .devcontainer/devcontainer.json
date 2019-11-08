@@ -1,0 +1,16 @@
+{
+  // Install TLA+ and GraphViz extension
+  "extensions": [
+    "alygin.vscode-tlaplus",
+    "efanzh.graphviz-preview",
+    "mhutchie.git-graph"
+  ],
+
+  // don't check for deadlocks and automatically generate graphviz
+  "settings": {
+    "tlaplus.tlc.modelChecker.options": "-deadlock -dump dot BlockingQueue.dot"
+  },
+
+  // Install htop and graphviz
+  "postCreateCommand": "sudo apt-get install -y graphviz htop"
+}
