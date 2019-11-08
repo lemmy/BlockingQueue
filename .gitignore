@@ -1,0 +1,12 @@
+*.toolbox/
+*.tlaps/
+states/
+*.out
+*.dot
+*.dvi
+*.tex
+*.pdf
+.vscode/
+build/
+.classpath
+.project
