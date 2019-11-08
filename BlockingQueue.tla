@@ -12,13 +12,13 @@ ASSUME /\ Producers # {}                      (* at least one producer *)
        
 -----------------------------------------------------------------------------
 
-VARIABLES buffer, waitSet
-vars == <<buffer, waitSet>>
+VARIABLES buffer, waitSet, consumers
+vars == <<buffer, waitSet, consumers>>
 
-RunningThreads == (Producers \cup Consumers) \ waitSet
+RunningThreads == (Producers \cup consumers) \ waitSet
 
 NotifyOther(t) == 
-          LET S == IF t \in Producers THEN waitSet \ Producers ELSE waitSet \ Consumers
+          LET S == IF t \in Producers THEN waitSet \ Producers ELSE waitSet \ consumers
           IN IF S # {}
              THEN \E x \in S : waitSet' = waitSet \ {x}
              ELSE UNCHANGED waitSet
@@ -48,22 +48,26 @@ Get(t) ==
 (* Initially, the buffer is empty and no thread is waiting. *)
 Init == /\ buffer = <<>>
         /\ waitSet = {}
+        /\ consumers = Consumers
 
 (* Then, pick a thread out of all running threads and have it do its thing. *)
-Next == \E t \in RunningThreads: \/ /\ t \in Producers
-                                    /\ Put(t, t) \* Add some data to buffer
-                                 \/ /\ t \in Consumers
-                                    /\ Get(t)
+Next == /\ \E t \in RunningThreads: \/ /\ t \in Producers
+                                       /\ Put(t, t) \* Add some data to buffer
+                                    \/ /\ t \in consumers
+                                       /\ Get(t)
+        \* Crash/Fail-stop semantics for consumers. Non-deterministically
+        \* crash a subset of the consumers, but not all at once.
+        /\ consumers' \in (SUBSET Consumers) \ {Consumers, consumers, {}}
 
 -----------------------------------------------------------------------------
 
 (* TLA+ is untyped, thus lets verify the range of some values in each state. *)
 TypeInv == /\ buffer \in Seq(Producers)
            /\ Len(buffer) \in 0..BufCapacity
-           /\ waitSet \subseteq (Producers \cup Consumers)
+           /\ waitSet \subseteq (Producers \cup consumers)
 
 (* No Deadlock *)
-Invariant == waitSet # (Producers \cup Consumers)
+Invariant == waitSet # (Producers \cup consumers)
 
 -----------------------------------------------------------------------------
 
