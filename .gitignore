@@ -1,0 +1,27 @@
+*.toolbox/
+*.tlaps/
+states/
+*.out
+*.dot
+*.dvi
+*.tex
+*.pdf
+.vscode/
+build/
+.classpath
+.project
+impl/producer_consumer
+CommunityModules/
+
+## Blacklist TLAPS cache folder
+## See https://github.com/tlaplus/tlapm/issues/16
+*.tlaps/
+__tlacache__
+.tlacache
+
+## Blacklist apalache working dir
+x/
+detailed.log
+
+## Ignore tools installed into the workspace
+tools/

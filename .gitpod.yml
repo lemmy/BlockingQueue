@@ -1,0 +1,7 @@
+vscode:
+  extensions:
+    - alygin.vscode-tlaplus@1.5.0:4/HF8Om4SqXKpiDEBubEzw==
+
+tasks:
+  - init: git config --global alias.slog 'log --pretty=oneline --abbrev-commit'
+  - init: git config --global alias.co checkout

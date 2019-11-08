@@ -1,0 +1,21 @@
+{
+  "name": "TLA+ BlockingQueue",
+
+  // Install optional extension. If this fails, it just degrades the convenience factor.
+  "extensions": [
+    "tlaplus.vscode-ide",
+    "EFanZh.graphviz-preview",
+    "cssho.vscode-svgviewer",
+    "tomoki1207.pdf",
+    "mhutchie.git-graph"
+  ],
+
+  // - Do not automatically update extensions (E.g. better-code ext is patched for TLA+)
+  // - Use Java GC that works best with TLC.
+  // - https://github.com/tlaplus/vscode-tlaplus/wiki/Automatic-Module-Parsing
+  "settings": {
+    "tlaplus.tlc.modelChecker.options": "-deadlock -dump dot BlockingQueue.dot"
+  },
+
+  "postCreateCommand": "bash -i .devcontainer/install.sh",
+}
