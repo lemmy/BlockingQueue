@@ -1,0 +1,36 @@
+{
+    "tlaplus.tlc.modelChecker.options": "-deadlock -noTE",
+    "tlaplus.tlc.statisticsSharing": "share",
+    "tlaplus.java.options": "-XX:+UseParallelGC",
+    "[tlaplus]": {"editor.codeActionsOnSave": {"source": true} },
+    "extensions.autoCheckUpdates": false,
+    "extensions.autoUpdate": false,
+    "breadcrumbs.enabled": false,
+    "editor.minimap.enabled": false,
+    "editor.useTabStops": false,
+    "redhat.telemetry.enabled": false,
+    "settingsSync.ignoredExtensions": [
+     "aaron-bond.better-comments"
+    ],
+    "files.exclude": {
+        ".gitignore": true,
+        ".gitpod.yml": true,
+        ".devcontainer": true,
+        ".github": true,
+        ".vscode": true,
+        "LICENSE": true,
+        "figures": true,
+        ".tlacache": true,
+        "*.tlaps": true,
+        "states": true,
+        "x": true,
+        "log0.smt": true,
+        "profile-rules.txt": true,
+        "detailed.log": true,
+        "*.toolbox": true,
+        "*.aux": true,
+        "*.dvi": true,
+        "*.log": true,
+        "*.tex": true
+    }
+}
