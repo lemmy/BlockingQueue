@@ -12,6 +12,18 @@ Click either one of the buttons to launch a zero-install IDE to give the TLA+ sp
 This tutorial is work in progress. More chapters will be added in the future. In the meantime, feel free to open issues with questions, clarifications, and recommendations. You can also reach out to me on [twitter](https://twitter.com/lemmster).  Basic TLA+ learning material can be found over at [Lamport's TLA+ page](http://lamport.azurewebsites.net/tla/learning.html).
 
 --------------------------------------------------------------------------
+### v15 (TLAPS): Finding the inductive invariant.
+
+The previous step was easy and straight forward!  Now comes the hard part: Finding
+the inductive invariant that implies deadlock freedom.
+
+Unfortunately, naive approach does not work: ![Naive IInv](./screencasts/v12-IInv.gif)
+
+Invariant is not *inductive*, because ```Invariant /\ Next_vars => Invariant'``` does not
+hold for e.g. the ```[buffer = <<>> /\ Wait(t)]_vars``` step (assum we are in the 
+(unreachable) state with ```RunnintThreads = {t}```, the successor state will have
+```RunningThreads' = {} /\ waitSet' = (Producers \cup Consumers)```.  A similar argument
+applies to a ```[Len(buffer) = BufCapacity /\ Wait(t)]_vars``` step.
 
 ### v14 (TLAPS): Proof that TypeInv is inductive.
 
