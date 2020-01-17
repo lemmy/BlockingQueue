@@ -9,6 +9,22 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
+    # Do not download and install TLAPS over and over again.
+    - uses: actions/cache@v1
+      id: cache
+      with:
+        path: tlaps/
+        key: tlaps1.4.5
+    - name: Get TLAPS
+      if: steps.cache.outputs.cache-hit != 'true' # see actions/cache above
+      run: wget https://tla.msr-inria.inria.fr/tlaps/dist/current/tlaps-1.4.5-x86_64-linux-gnu-inst.bin
+    - name: Install TLAPS
+      if: steps.cache.outputs.cache-hit != 'true' # see actions/cache above
+      run: |
+        chmod +x tlaps-1.4.5-x86_64-linux-gnu-inst.bin
+        ./tlaps-1.4.5-x86_64-linux-gnu-inst.bin -d tlaps
+    - name: Run TLAPS
+      run: tlaps/bin/tlapm --cleanfp -I tlaps/ BlockingQueue.tla
     - name: Get (nightly) TLC
       run: wget https://nightly.tlapl.us/dist/tla2tools.jar
     - name: Run TLC
