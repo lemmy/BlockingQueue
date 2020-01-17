@@ -1,0 +1,19 @@
+strict digraph DiskGraph {
+nodesep=0.35;
+subgraph cluster_graph {
+color="white";
+1361886694690155653 [label="/\\ buffer = <<>>\n/\\ waitSet = {}",style = filled]
+1361886694690155653 -> 8427788535082373079 [label="",color="black",fontcolor="black"];
+8427788535082373079 [label="/\\ buffer = <<p1>>\n/\\ waitSet = {}"];
+1361886694690155653 -> -7172793711072072991 [label="",color="black",fontcolor="black"];
+-7172793711072072991 [label="/\\ buffer = <<>>\n/\\ waitSet = {c1}"];
+8427788535082373079 -> -6634559038400111083 [label="",color="black",fontcolor="black"];
+-6634559038400111083 [label="/\\ buffer = <<p1>>\n/\\ waitSet = {p1}"];
+8427788535082373079 -> 1361886694690155653 [label="",color="black",fontcolor="black"];
+-7172793711072072991 -> 8427788535082373079 [label="",color="black",fontcolor="black"];
+-6634559038400111083 -> 1361886694690155653 [label="",color="black",fontcolor="black"];
+{rank = same; 1361886694690155653;}
+{rank = same; 8427788535082373079;-7172793711072072991;}
+{rank = same; -6634559038400111083;}
+}
+}
