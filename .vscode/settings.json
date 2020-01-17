@@ -31,6 +31,7 @@
         "*.aux": true,
         "*.dvi": true,
         "*.log": true,
-        "*.tex": true
+        "*.tex": true,
+        "tools/": true
     }
 }
