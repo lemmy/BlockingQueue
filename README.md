@@ -7,6 +7,18 @@ Each [git commit](https://github.com/lemmy/BlockingQueue/commits/tutorial) intro
 [Click here for a zero-install environment to give the TLA+ specification language a try](https://gitpod.io/#https://github.com/lemmy/BlockingQueue).
 
 --------------------------------------------------------------------------
+### v12 (TLAPS): Finding the inductive invariant.
+
+The previous step was easy and straight forward!  Now comes the hard part: Finding
+the inductive invariant that implies deadlock freedom.
+
+Unfortunately, naive approach does not work: ![Naive IInv](./screencasts/v12-IInv.gif)
+
+Invariant is not *inductive*, because ```Invariant /\ Next_vars => Invariant'``` does not
+hold for e.g. the ```[buffer = <<>> /\ Wait(t)]_vars``` step (assum we are in the 
+(unreachable) state with ```RunnintThreads = {t}```, the successor state will have
+```RunningThreads' = {} /\ waitSet' = (Producers \cup Consumers)```.  A similar argument
+applies to a ```[Len(buffer) = BufCapacity /\ Wait(t)]_vars``` step.
 
 ### v11 (TLAPS): Proof that TypeInv is inductive.
 
