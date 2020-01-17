@@ -13,6 +13,21 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v03: State graph for configurations p1c2b1 and p2c1b1.
+    
+Slightly larger configuration with which we can visually spot the
+deadlock: ![p1c2b1](./p1c2b1.svg).
+
+BlockingQueueDebug.tla/.cfg shows how to interactively explore a
+state graph for configuration p2c1b1 with TLC in combination with
+GraphViz (xdot):
+
+![Explore state graph](./screencasts/v03-StateGraph.gif)
+
+```
+java -jar tla2tools.jar -deadlock -dump dot,snapshot p2c1b1.dot BlockingQueueDebug
+```
+
 ### v02: State graph for minimum configuration p1c1b1.
     
 Initial TLA+ spec that models the existing (Java) code with all its
