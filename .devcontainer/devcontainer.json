@@ -14,7 +14,8 @@
   // - Use Java GC that works best with TLC.
   // - https://github.com/alygin/vscode-tlaplus/wiki/Automatic-Module-Parsing
   "settings": {
-    "tlaplus.tlc.modelChecker.options": "-deadlock -dump dot BlockingQueue.dot"
+    "tlaplus.tlc.modelChecker.options": "-deadlock -dump dot BlockingQueue.dot",
+    "tlaplus.java.options": "-XX:+UseParallelGC"
   },
 
   "postCreateCommand": "bash -i .devcontainer/install.sh",
