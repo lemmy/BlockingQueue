@@ -9,6 +9,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
+    - name: Get TLAPS
+      run: wget https://github.com/tlaplus/tlapm/releases/download/1.6.0-pre/tlapm-1.6.0-pre-x86_64-linux-gnu.tar.gz
+    - name: Install TLAPS
+      run: tar -xzf tlapm-1.6.0-pre-x86_64-linux-gnu.tar.gz
+    - name: Run TLAPS
+      run: tlapm/bin/tlapm --cleanfp BlockingQueue.tla
     - name: Get (nightly) TLC
       run: wget https://nightly.tlapl.us/dist/tla2tools.jar
     - name: Run TLC

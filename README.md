@@ -13,6 +13,25 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v14 (TLAPS): Proof that TypeInv is inductive.
+
+Recall that the deadlock originally only happened iff 
+```2*BufCapacity < Cardinality(Producers \cup Consumers)```.  How do we know
+that the solution with two mutexes hasn't a similar flaw, just for a different
+inequation?  All the model-checking in the world won't gives us absolute
+confidence, because the domains for Producers, Consumers, and BufCapacity are
+infinite.  We have to prove that the solution with two mutexes is correct for all configurations no matter what values we chose for producer, consumer, or BufCapacity.
+
+Here, we will use [TLAPS](https://tla.msr-inria.inria.fr/tlaps/content/Home.html) to take the first step towards an invariance proof of deadlock freedom by proving that ```TypeInv``` is inductive.  In the screencast below, TLAPS first checks the QED step,
+then the 1<1> and 1<2> steps, and finally the top-level THEOREM.
+
+![Invoke TLAPS](./screencasts/v11-TypeInv.gif)
+
+Note that this step and the following ones require the TLA+ Toolbox and TLAPS! If
+you don't have the Toolbox or TLAPS, you can skip this part (TLAPS.tla has been added to this repository to avoid parser errors).
+
+--------------------------------------------------------------------------
+
 ### v13 (Bugfix): (Logically) two mutexes.
 
 Remove notifyAll and instead introduce two mutexes (one for Producers

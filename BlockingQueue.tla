@@ -65,4 +65,8 @@ TypeInv == /\ buffer \in Seq(Producers)
 (* No Deadlock *)
 Invariant == waitSet # (Producers \cup Consumers)
 
+-----------------------------------------------------------------------------
+
+Spec == Init /\ [][Next]_vars
+
 =============================================================================
