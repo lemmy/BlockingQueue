@@ -60,12 +60,14 @@ Next == \E t \in RunningThreads: \/ /\ t \in Producers
 (* TLA+ is untyped, thus lets verify the range of some values in each state. *)
 TypeInv == /\ buffer \in Seq(Producers)
            /\ Len(buffer) \in 0..BufCapacity
-           /\ waitSet \subseteq (Producers \cup Consumers)
+           /\ waitSet \in SUBSET (Producers \cup Consumers)
 
 (* No Deadlock *)
 Invariant == waitSet # (Producers \cup Consumers)
 
 -----------------------------------------------------------------------------
+
+MySeq(P) == UNION {[1..n -> P] : n \in 0..BufCapacity}
 
 INSTANCE TLAPS
 
@@ -92,6 +94,13 @@ LEMMA TypeCorrect == Spec => []TypeInv
 \* is inductive.
 IInv == /\ TypeInv
         /\ Invariant
+        \* When the buffer is empty, a consumer will be added to the waitSet.
+        \* However, this does not crate a deadlock, because at least one producer
+        \* will not be in the waitSet.
+        /\ buffer = <<>> => \E p \in Producers : p \notin waitSet
+        \* Vice versa, when buffer is full, a producer will be added to waitSet,
+        \* but at least one consumer wSon't be in waitSet.
+        /\ Len(buffer) = BufCapacity => \E c \in Consumers : c \notin waitSet
 
 THEOREM DeadlockFreedom == Spec => []Invariant
 <1>1. Init => IInv BY DEF IInv

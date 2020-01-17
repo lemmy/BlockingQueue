@@ -12,6 +12,17 @@ Click either one of the buttons to launch a zero-install IDE to give the TLA+ sp
 This tutorial is work in progress. More chapters will be added in the future. In the meantime, feel free to open issues with questions, clarifications, and recommendations. You can also reach out to me on [twitter](https://twitter.com/lemmster).  Basic TLA+ learning material can be found over at [Lamport's TLA+ page](http://lamport.azurewebsites.net/tla/learning.html).
 
 --------------------------------------------------------------------------
+
+### v16 (TLAPS): Validating an inductive invariant candidate.
+
+Finding an inductive invariant is hard!  Fortunately, we can use TLC to - little by little - find and validate potential inductive invariants.  Some deeper thinking is at play too though:
+
+![IInv with TLC](./screencasts/v13-IInvTLC.gif)
+
+Note that we rewrite the last conjunct of ```TypeInv``` to ```\in SUBSET```.  Check
+the [discussion group](http://discuss.tlapl.us/msg00619.html) for the technical reason why.  We also re-define the Seq operator because its definition in the Sequences 
+standard module is not enumerable.  We only re-define Seq in BlockingQueue.tla because the vscode extensions doesn't have a model editor yet.  Generally though, we would do this in the model to not taint the actual spec.
+
 ### v15 (TLAPS): Finding the inductive invariant.
 
 The previous step was easy and straight forward!  Now comes the hard part: Finding
