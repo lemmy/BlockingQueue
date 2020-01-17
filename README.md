@@ -13,6 +13,17 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v02: State graph for minimum configuration p1c1b1.
+    
+Initial TLA+ spec that models the existing (Java) code with all its
+bugs and shortcomings.
+    
+The model uses the minimal parameters (1 producer, 1 consumer, and
+a buffer of size one) possible.  When TLC generates the state graph with
+```java -jar tla2tools.jar -deadlock -dump dot p1c1b1.dot BlockingQueue```,
+we can visually verify that no deadlock is possible with this
+configuration: ![p1c1b1](./p1c1b1.svg).
+
 ### v01: Java and C implementations with configuration p4c3b3.
     
 Legacy Java code with all its bugs and shortcomings.  At this point
