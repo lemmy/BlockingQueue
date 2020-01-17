@@ -13,6 +13,12 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v17 (TLAPS): TLAPS proves DeadLockFreedom.
+
+TLAPS has no problem proving DeadlockFreedom.
+
+![TLAPS proves IInv](./screencasts/v14-IInvWin.gif)
+
 ### v16 (TLAPS): Validating an inductive invariant candidate.
 
 Finding an inductive invariant is hard!  Fortunately, we can use TLC to - little by little - find and validate potential inductive invariants.  Some deeper thinking is at play too though:
