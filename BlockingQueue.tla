@@ -97,9 +97,10 @@ IInv == /\ TypeInv
         /\ Len(buffer) = BufCapacity => \E c \in Consumers : c \notin waitSet
 
 THEOREM DeadlockFreedom == Spec => []Invariant
-<1>1. Init => IInv BY DEF IInv
-<1>2. IInv /\ [Next]_vars => IInv' BY DEF IInv
-<1>3. IInv => Invariant  BY DEF IInv
-<1>4. QED BY <1>1,<1>2,<1>3,PTL
+<1> USE Assumption, TypeCorrect DEF IInv, Invariant
+<1>1. Init => IInv BY DEF Init
+<1>2. IInv /\ [Next]_vars => IInv' BY DEF Next, Put, Get, Wait, NotifyOther, vars
+<1>3. IInv => Invariant OBVIOUS 
+<1>4. QED BY <1>1,<1>2,<1>3,PTL DEF Spec
 
 =============================================================================
