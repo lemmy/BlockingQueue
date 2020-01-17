@@ -7,6 +7,17 @@ Each [git commit](https://github.com/lemmy/BlockingQueue/commits/tutorial) intro
 [Click here for a zero-install environment to give the TLA+ specification language a try](https://gitpod.io/#https://github.com/lemmy/BlockingQueue).
 
 --------------------------------------------------------------------------
+
+### v13 (TLAPS): Validating an inductive invariant candidate.
+
+Finding an inductive invariant is hard!  Fortunately, we can use TLC to - little by little - find and validate potential inductive invariants.  Some deeper thinking is at play too though:
+
+![IInv with TLC](./screencasts/v13-IInvTLC.gif)
+
+Note that we rewrite the last conjunct of ```TypeInv``` to ```\in SUBSET```.  Check
+the [discussion group](http://discuss.tlapl.us/msg00619.html) for the technical reason why.  We also re-define the Seq operator because its definition in the Sequences 
+standard module is not enumerable.  We only re-define Seq in BlockingQueue.tla because the vscode extensions doesn't have a model editor yet.  Generally though, we would do this in the model to not taint the actual spec.
+
 ### v12 (TLAPS): Finding the inductive invariant.
 
 The previous step was easy and straight forward!  Now comes the hard part: Finding
