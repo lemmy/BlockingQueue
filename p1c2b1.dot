@@ -1,0 +1,53 @@
+strict digraph DiskGraph {
+nodesep=0.35;
+subgraph cluster_graph {
+color="white";
+-3778992851039715535 [label="/\\ buffer = <<>>\n/\\ waitSet = {}",style = filled]
+-3778992851039715535 -> 2772154266058791907 [label="",color="black",fontcolor="black"];
+2772154266058791907 [label="/\\ buffer = <<p1>>\n/\\ waitSet = {}"];
+-3778992851039715535 -> 6548944862504700923 [label="",color="black",fontcolor="black"];
+6548944862504700923 [label="/\\ buffer = <<>>\n/\\ waitSet = {c1}"];
+-3778992851039715535 -> 6540826889138644438 [label="",color="black",fontcolor="black"];
+6540826889138644438 [label="/\\ buffer = <<>>\n/\\ waitSet = {c2}"];
+2772154266058791907 -> 3763886054749291196 [label="",color="black",fontcolor="black"];
+3763886054749291196 [label="/\\ buffer = <<p1>>\n/\\ waitSet = {p1}"];
+2772154266058791907 -> -3778992851039715535 [label="",color="black",fontcolor="black"];
+2772154266058791907 -> -3778992851039715535 [label="",color="black",fontcolor="black"];
+6548944862504700923 -> 2772154266058791907 [label="",color="black",fontcolor="black"];
+6548944862504700923 -> -2764478506102903252 [label="",color="black",fontcolor="black"];
+-2764478506102903252 [label="/\\ buffer = <<>>\n/\\ waitSet = {c1, c2}"];
+6540826889138644438 -> 2772154266058791907 [label="",color="black",fontcolor="black"];
+6540826889138644438 -> -2764478506102903252 [label="",color="black",fontcolor="black"];
+3763886054749291196 -> -3778992851039715535 [label="",color="black",fontcolor="black"];
+3763886054749291196 -> -3778992851039715535 [label="",color="black",fontcolor="black"];
+-2764478506102903252 -> 3779173122827165414 [label="",color="black",fontcolor="black"];
+3779173122827165414 [label="/\\ buffer = <<p1>>\n/\\ waitSet = {c2}"];
+-2764478506102903252 -> 3771052408894517451 [label="",color="black",fontcolor="black"];
+3771052408894517451 [label="/\\ buffer = <<p1>>\n/\\ waitSet = {c1}"];
+3779173122827165414 -> 5640896294540704706 [label="",color="black",fontcolor="black"];
+5640896294540704706 [label="/\\ buffer = <<p1>>\n/\\ waitSet = {p1, c2}"];
+3779173122827165414 -> -3778992851039715535 [label="",color="black",fontcolor="black"];
+3771052408894517451 -> 5651829010090595823 [label="",color="black",fontcolor="black"];
+5651829010090595823 [label="/\\ buffer = <<p1>>\n/\\ waitSet = {p1, c1}"];
+3771052408894517451 -> -3778992851039715535 [label="",color="black",fontcolor="black"];
+5640896294540704706 -> 6540826889138644438 [label="",color="black",fontcolor="black"];
+5640896294540704706 -> 6524586544829790604 [label="",color="black",fontcolor="black"];
+6524586544829790604 [label="/\\ buffer = <<>>\n/\\ waitSet = {p1}"];
+5651829010090595823 -> 6548944862504700923 [label="",color="black",fontcolor="black"];
+5651829010090595823 -> 6524586544829790604 [label="",color="black",fontcolor="black"];
+6524586544829790604 -> 3302632211556063011 [label="",color="black",fontcolor="black"];
+3302632211556063011 [label="/\\ buffer = <<>>\n/\\ waitSet = {p1, c1}"];
+6524586544829790604 -> 3310822744611305742 [label="",color="black",fontcolor="black"];
+3310822744611305742 [label="/\\ buffer = <<>>\n/\\ waitSet = {p1, c2}"];
+3302632211556063011 -> -1919067380447185343 [label="",color="black",fontcolor="black"];
+-1919067380447185343 [label="/\\ buffer = <<>>\n/\\ waitSet = {p1, c1, c2}"];
+3310822744611305742 -> -1919067380447185343 [label="",color="black",fontcolor="black"];
+{rank = same; -3778992851039715535;}
+{rank = same; 2772154266058791907;6548944862504700923;6540826889138644438;}
+{rank = same; -2764478506102903252;3763886054749291196;}
+{rank = same; 3771052408894517451;3779173122827165414;}
+{rank = same; 5651829010090595823;5640896294540704706;}
+{rank = same; 6524586544829790604;}
+{rank = same; 3310822744611305742;3302632211556063011;}
+}
+}
