@@ -69,4 +69,9 @@ Invariant == waitSet # (Producers \cup Consumers)
 
 Spec == Init /\ [][Next]_vars
 
+\* The naive thing to do is to check if the conjunct of TypeInv /\ Invariant
+\* is inductive.
+IInv == /\ TypeInv
+        /\ Invariant
+
 =============================================================================
