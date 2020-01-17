@@ -8,7 +8,8 @@
 
   // don't check for deadlocks and automatically generate graphviz
   "settings": {
-    "tlaplus.tlc.modelChecker.options": "-deadlock -dump dot BlockingQueue.dot"
+    "tlaplus.tlc.modelChecker.options": "-deadlock -dump dot BlockingQueue.dot",
+    "tlaplus.java.options": "-XX:+UseParallelGC -cp CommunityModules.jar"
   },
 
   // Install htop and graphviz (to visualize TLC state graphs) and git shorthands to reduce typing in presentations.
