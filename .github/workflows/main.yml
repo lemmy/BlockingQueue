@@ -1,0 +1,16 @@
+name: CI
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Get (nightly) TLC
+      run: wget https://nightly.tlapl.us/dist/tla2tools.jar
+    - name: Run TLC
+      run: java -Dtlc2.TLC.stopAfter=1800 -cp tla2tools.jar tlc2.TLC -workers 2 -lncheck final -checkpoint 60 -coverage 60 -tool -deadlock BlockingQueue
+
