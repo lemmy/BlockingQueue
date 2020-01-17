@@ -13,6 +13,24 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v04: Debug state graph for configuration p2c1b1.
+    
+In the previous step, we looked at the graphical representation of the state
+graph.  With the help of TLCExt!PickSuccessor we build us a debugger
+with which we study the state graph interactively.  We learn that with
+configuration p2c1b1 there are two deadlock states:
+
+![PickSuccessor](./screencasts/v04-PickSuccessor.gif)
+
+The [CommunityModules](https://github.com/tlaplus/CommunityModules) release has to be added to TLC's command-line:
+
+```
+java -cp tla2tools.jar:CommunityModules.jar tlc2.TLC -deadlock BlockingQueue
+```
+
+Note that TLC's ```-continue``` flag would have also worked to find both
+deadlock states.
+
 ### v03: State graph for configurations p1c2b1 and p2c1b1.
     
 Slightly larger configuration with which we can visually spot the
