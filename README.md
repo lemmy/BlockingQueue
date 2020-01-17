@@ -13,6 +13,19 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v01: Java and C implementations with configuration p4c3b3.
+    
+Legacy Java code with all its bugs and shortcomings.  At this point
+in the tutorial, we only know that the code can exhibit a deadlock,
+but we don't know why.
+    
+What we will do is play a game with the universe (non-determinism).
+Launch the Java app with ```java -cp impl/src/ org.kuppe.App``` in
+the background and follow along with the tutorial.  If the Java app
+deadlocks before you finish the tutorial, the universe wins.
+
+(For the c-affine among us, ```impl/producer_consumer.c``` is a C implementation of the blocking buffer sans most of the logging).
+
 ### v00: IDE setup, nothing to see here.
     
 Add IDE setup for VSCode online and gitpod.io.
