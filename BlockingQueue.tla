@@ -82,4 +82,15 @@ LEMMA TypeCorrect == Spec => []TypeInv
 <1>2. TypeInv /\ [Next]_vars => TypeInv' BY SMT DEF Next, Put, Get, Wait, NotifyOther, vars
 <1>. QED BY <1>1, <1>2, PTL DEF Spec
 
+\* The naive thing to do is to check if the conjunct of TypeInv /\ Invariant
+\* is inductive.
+IInv == /\ TypeInv
+        /\ Invariant
+
+THEOREM DeadlockFreedom == Spec => []Invariant
+<1>1. Init => IInv BY DEF IInv
+<1>2. IInv /\ [Next]_vars => IInv' BY DEF IInv
+<1>3. IInv => Invariant  BY DEF IInv
+<1>4. QED BY <1>1,<1>2,<1>3,PTL
+
 =============================================================================
