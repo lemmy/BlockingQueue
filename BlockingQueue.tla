@@ -86,8 +86,8 @@ USE Assumption DEF vars, RunningThreads,
 \* does not help us prove Invariant.
 \* Luckily, TLAPS does not require us to decompose the proof into substeps. 
 LEMMA TypeCorrect == Spec => []TypeInv
-<1>1. Init => TypeInv OBVIOUS 
-<1>2. TypeInv /\ [Next]_vars => TypeInv' OBVIOUS 
+<1>1. Init => TypeInv BY SMT 
+<1>2. TypeInv /\ [Next]_vars => TypeInv' BY SMT 
 <1>. QED BY <1>1, <1>2, PTL
 
 \* The naive thing to do is to check if the conjunct of TypeInv /\ Invariant
@@ -103,7 +103,7 @@ IInv == /\ TypeInv
         /\ Len(buffer) = BufCapacity => \E c \in Consumers : c \notin waitSet
 
 THEOREM DeadlockFreedom == Spec => []Invariant
-<1>1. Init => IInv BY DEF IInv
+<1>1. Init => IInv BY SMT DEF IInv
 <1>2. IInv /\ [Next]_vars => IInv' BY DEF IInv
 <1>3. IInv => Invariant  BY DEF IInv
 <1>4. QED BY <1>1,<1>2,<1>3,PTL
