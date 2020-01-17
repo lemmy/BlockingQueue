@@ -65,4 +65,21 @@ TypeInv == /\ buffer \in Seq(Producers)
 (* No Deadlock *)
 Invariant == waitSet # (Producers \cup Consumers)
 
+-----------------------------------------------------------------------------
+
+INSTANCE TLAPS
+
+Spec == Init /\ [][Next]_vars
+
+\* TypeInv will be a conjunct of the inductive invariant, so prove it inductive.
+\* An invariant I is inductive, iff Init => I and I /\ [Next]_vars => I. Note
+\* though, that TypeInv itself won't imply Invariant though!  TypeInv alone
+\* does not help us prove Invariant.
+\* Luckily, TLAPS does not require us to decompose the proof into substeps. 
+LEMMA TypeCorrect == Spec => []TypeInv
+<1> USE Assumption DEF TypeInv
+<1>1. Init => TypeInv BY SMT DEF Init
+<1>2. TypeInv /\ [Next]_vars => TypeInv' BY SMT DEF Next, Put, Get, Wait, NotifyOther, vars
+<1>. QED BY <1>1, <1>2, PTL DEF Spec
+
 =============================================================================
