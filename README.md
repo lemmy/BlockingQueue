@@ -13,6 +13,15 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v18 (TLAPS): Co-domain of buffer not relevant for proof.
+
+No need to say anything about the co-domain of buffer in the proof.  What is enqueued
+and dequeued has no relevance with regards to deadlock freedom.
+
+However, ```IInv``` by itself no longer completely specifies the (function) buffer, thus ```MCIInv``` has been added.
+
+Part I of Lamport's paper [Proving Safety Properties](https://lamport.azurewebsites.net/tla/proving-safety.pdf) has more exercises about finding and proving inductive invariants. 
+
 ### v17 (TLAPS): TLAPS proves DeadLockFreedom.
 
 TLAPS has no problem proving DeadlockFreedom.
