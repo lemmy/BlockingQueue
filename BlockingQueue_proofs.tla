@@ -15,7 +15,7 @@ LEMMA TypeCorrect == Spec => []TypeInv
 THEOREM DeadlockFreedom == Spec => []Invariant
 <1> USE Assumption, TypeCorrect DEF IInv, Invariant
 <1>1. Init => IInv BY DEF Init
-<1>2. IInv /\ [Next]_vars => IInv' BY DEF Next, Put, Get, Wait, NotifyOther, vars
+<1>2. TypeInv /\ IInv /\ [Next]_vars => IInv' BY DEF TypeInv, Next, Put, Get, Wait, NotifyOther, vars
 <1>3. IInv => Invariant OBVIOUS 
 <1>4. QED BY <1>1,<1>2,<1>3,PTL DEF Spec
 

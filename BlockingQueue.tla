@@ -73,7 +73,8 @@ Spec == Init /\ [][Next]_vars
 
 \* The naive thing to do is to check if the conjunct of TypeInv /\ Invariant
 \* is inductive.
-IInv == /\ TypeInv
+IInv == /\ TypeInv!2
+        /\ TypeInv!3
         /\ Invariant
         \* When the buffer is empty, a consumer will be added to the waitSet.
         \* However, this does not crate a deadlock, because at least one producer
@@ -82,5 +83,7 @@ IInv == /\ TypeInv
         \* Vice versa, when buffer is full, a producer will be added to waitSet,
         \* but at least one consumer wSon't be in waitSet.
         /\ Len(buffer) = BufCapacity => \E c \in Consumers : c \notin waitSet
+
+MCIInv == TypeInv!1 /\ IInv
 
 =============================================================================
