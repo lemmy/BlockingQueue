@@ -100,7 +100,7 @@ IInv == /\ TypeInv!2
         \* will not be in the waitSet.
         /\ buffer = <<>> => \E p \in Producers : p \notin waitSet
         \* Vice versa, when buffer is full, a producer will be added to waitSet,
-        \* but at least one consumer wSon't be in waitSet.
+        \* but at least one consumer won't be in waitSet.
         /\ Len(buffer) = BufCapacity => \E c \in Consumers : c \notin waitSet
 
 THEOREM DeadlockFreedom == Spec => []Invariant
@@ -114,5 +114,12 @@ MCIInv == TypeInv!1 /\ IInv
 -----------------------------------------------------------------------------
 
 PutEnabled == \A p \in Producers : ENABLED Put(p, p)
+
+FairSpec == Spec /\ WF_vars(Next)
+
+(* All producers will continuously be serviced. For this to be violated,    *)
+(* ASSUME Cardinality(Producers) > 1 has to hold (a single producer cannot  *)
+(* starve itself).                                                          *)
+Starvation == \A p \in Producers: []<>(<<Put(p, p)>>_vars)
 
 =============================================================================
