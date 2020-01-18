@@ -13,6 +13,33 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v27 (Starvation): Starvation of individual producers.
+
+Individual Producer or Consumer threads can starve because we haven't specified fair (except for weak fairness of Next to avoid the trivial counter-example of stuttering after Init).
+    
+This steps introduces the concept of liveness and fairness and how they are expressed in TLA+.
+
+```tla
+Checking temporal properties for the complete state space with 1600 total distinct states at (2020-01-17 16:04:37)
+Error: Temporal properties were violated.
+
+Error: The following behavior constitutes a counter-example:
+
+State 1: <Initial predicate>
+/\ buffer = <<>>
+/\ waitSet = {}
+
+State 2: <Next line 54, col 9 to line 57, col 45 of module BlockingQueue>
+/\ buffer = <<>>
+/\ waitSet = {c1}
+
+State 3: <Next line 54, col 9 to line 57, col 45 of module BlockingQueue>
+/\ buffer = <<p4>>
+/\ waitSet = {}
+
+Back to state 1: <Next line 54, col 9 to line 57, col 45 of module BlockingQueue>
+```
+
 ### v26 (Starvation): Refactor specification to move action enabling condition into Put and Get.
 
 So far, the spec was written in a way that the ```Put``` and ```Get``` sub-actions of ```Next``` were permanently enabled, i.e. ```\A p \in Producers : ENABLED Put(p,p)``` was an invariant of ```Spec``` (vice versa for Consumers). The next-state relation ```\E t \in RunningThreads: t \in Producers /\ ...``` took care of scheduling "enabled" producers only. Here, we refactor the next-state relation and "push" the enabling condition into the sub-actions. With this change, ```\A p \in Producers : ENABLED Put(p,p)``` is no longer invariant (see trace below). Subsequent steps will show the reason why we refactored the spec. Note however, that this refactoring does not change the set of behaviors defined by ```Spec```.
