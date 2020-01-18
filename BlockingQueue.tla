@@ -92,7 +92,8 @@ LEMMA TypeCorrect == Spec => []TypeInv
 
 \* The naive thing to do is to check if the conjunct of TypeInv /\ Invariant
 \* is inductive.
-IInv == /\ TypeInv
+IInv == /\ TypeInv!2
+        /\ TypeInv!3
         /\ Invariant
         \* When the buffer is empty, a consumer will be added to the waitSet.
         \* However, this does not crate a deadlock, because at least one producer
@@ -107,5 +108,7 @@ THEOREM DeadlockFreedom == Spec => []Invariant
 <1>2. IInv /\ [Next]_vars => IInv' BY DEF IInv
 <1>3. IInv => Invariant  BY DEF IInv
 <1>4. QED BY <1>1,<1>2,<1>3,PTL
+
+MCIInv == TypeInv!1 /\ IInv
 
 =============================================================================
