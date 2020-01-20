@@ -8,6 +8,25 @@ Each [git commit](https://github.com/lemmy/BlockingQueue/commits/tutorial) intro
 
 --------------------------------------------------------------------------
 
+### v19: Refactor specification to move action enabling condition into Put and Get.
+
+So far, the spec was written in a way that the ```Put``` and ```Get``` sub-actions of ```Next``` were permanently enabled, i.e. ```\A p \in Producers : ENABLED Put(p,p)``` was an invariant of ```Spec``` (vice versa for Consumers). The next-state relation ```\E t \in RunningThreads: t \in Producers /\ ...``` took care of scheduling "enabled" producers only. Here, we refactor the next-state relation and "push" the enabling condition into the sub-actions. With this change, ```\A p \in Producers : ENABLED Put(p,p)``` is no longer invariant (see trace below). Subsequent steps will show the reason why we refactored the spec. Note however, that this refactoring does not change the set of behaviors defined by ```Spec```.
+
+```tla
+Invariant PutEnabled is violated.
+The behavior up to this point is:
+1: <Initial predicate>
+/\ buffer = <<>>
+/\ waitSet = {}
+2: <Put line 34, col 1 to line 39, col 16 of module BlockingQueue>
+/\ buffer = <<p1>>
+/\ waitSet = {}
+3: <Put line 34, col 1 to line 39, col 16 of module BlockingQueue>
+/\ buffer = <<p1>>
+/\ waitSet = {p1}
+```
+--------------------------------------------------------------------------
+
 ### v18 (Traces): Validate long executions against the spec.
 
 The previous step showed that trace validation is probabilistic and has no guarantees of finding violations of the high-level spec.  Thus, we want to increase the chance by checking a long or many traces.  However, copying long traces into the spec is not only a nuisance, but also slows down [SANY](https://github.com/tlaplus/tlaplus/issues/413#issuecomment-571024785).  This step introduces how to [serialize the app's output](./impl/src/org/kuppe/App2TLA.java) in a format that TLC can de-serialize efficiently with the help of the [IOUtils module](https://github.com/tlaplus/CommunityModules/blob/master/modules/IOUtils.tla).
