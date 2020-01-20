@@ -30,14 +30,16 @@ Wait(t) == /\ waitSet' = waitSet \cup {t}
 -----------------------------------------------------------------------------
 
 Put(t, d) ==
-   \/ /\ Len(buffer) < BufCapacity
+/\ t \notin waitSet
+/\ \/ /\ Len(buffer) < BufCapacity
       /\ buffer' = Append(buffer, d)
       /\ NotifyOther(Consumers)
    \/ /\ Len(buffer) = BufCapacity
       /\ Wait(t)
       
 Get(t) ==
-   \/ /\ buffer # <<>>
+/\ t \notin waitSet
+/\ \/ /\ buffer # <<>>
       /\ buffer' = Tail(buffer)
       /\ NotifyOther(Producers)
    \/ /\ buffer = <<>>
@@ -50,10 +52,8 @@ Init == /\ buffer = <<>>
         /\ waitSet = {}
 
 (* Then, pick a thread out of all running threads and have it do its thing. *)
-Next == \E t \in RunningThreads: \/ /\ t \in Producers
-                                    /\ Put(t, t) \* Add some data to buffer
-                                 \/ /\ t \in Consumers
-                                    /\ Get(t)
+Next == \/ \E p \in Producers: Put(p, p) \* Add some data to buffer
+        \/ \E c \in Consumers: Get(c)
 
 -----------------------------------------------------------------------------
 
@@ -110,5 +110,9 @@ THEOREM DeadlockFreedom == Spec => []Invariant
 <1>4. QED BY <1>1,<1>2,<1>3,PTL
 
 MCIInv == TypeInv!1 /\ IInv
+
+-----------------------------------------------------------------------------
+
+PutEnabled == \A p \in Producers : ENABLED Put(p, p)
 
 =============================================================================
