@@ -10,6 +10,14 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v30 (Refinement Fair): Prove TypeInv is an inductive invariant of BlockingQueueFair.
+
+As a first step of proving that ```BlockingQueueFair``` refines ```BlockingQueueSplit```, we once again prove inductiveness of ```TypeInv```.
+
+### v29 (Refinement Fair): Refine BlockingQueue with BlockingQueueFair spec.
+
+```BlockingQueueFair``` refines ```BlockingQueueSplit``` by notifying the longest-waiting producer or consumer thread instead of any thread in ```waitC``` or ```waitP```. For that, it uses (ordered) sequences in place of the (unordered) sets.  The refinement mapping is straight forward: ```BlockingQueueSplit!waitC``` and ```waitP``` are refined by the sequences ```waitSeqC``` and ```waitSeqP``` respectively.  TLC checked the refinement mapping for the finite model with the configuration p4c3b3.
+
 ### v28 (Starvation): Weak fairness defined for Put.
 
 Defining ```Next``` to be (weakly) [fair](https://pron.github.io/posts/tlaplus_part3#machine-closure-and-fairness) makes only sure that a Next-step is (eventually) taken.  However, ```Next``` is a disjunct of the ```Put``` and ```Get``` sub-actions and fairness does not distribute.  Since, we want all producers to eventually take steps, we specify (weak) fairness at the level of the ```Put``` sub-actions.  Unfortunately, producers can still starve:
