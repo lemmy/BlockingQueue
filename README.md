@@ -13,6 +13,47 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v19 (Traces): Print (partial) implementation executions.
+
+Having finished the proof of the deadlock fix below, we shift our attention to the (Java) implementation that we assume can still deadlock.  However, before we apply the fix of two mutexes, we use TLC to check if the implementation allows executions that violate the ```BlockingQueue``` spec.  In other words, we check if the implementation correctly implements the TLA+ spec (which we know it does not).  To do so, we print an execution to stdout with the help of the low-overhead [Java Flight Recorder](https://en.wikipedia.org/wiki/JDK_Flight_Recorder) that we can consider a very powerful logging framework.  However, plain logging to stdout - with a high-precision timestamp - would have worked too.   To activate JFR, run the app with:
+
+```bash
+java -XX:StartFlightRecording=disk=true,dumponexit=true,filename=app-$(date +%s).jfr -cp impl/src/ org.kuppe.App
+
+# Kill the process after a few seconds.
+
+# app-1580000457.jfr is the flight recording created by the previous command.
+java -cp impl/src/ org.kuppe.App2TLA app-1580000457.jfr 
+[ op |-> "w", waiter |-> "c" ],
+[ op |-> "e" ],
+[ op |-> "e" ],
+[ op |-> "d" ],
+[ op |-> "e" ],
+[ op |-> "d" ],
+[ op |-> "d" ],
+[ op |-> "e" ],
+[ op |-> "e" ],
+[ op |-> "d" ],
+[ op |-> "d" ],
+[ op |-> "e" ],
+[ op |-> "e" ],
+[ op |-> "e" ],
+[ op |-> "d" ],
+[ op |-> "d" ],
+[ op |-> "e" ],
+[ op |-> "e" ],
+[ op |-> "w", waiter |-> "p" ],
+[ op |-> "d" ],
+[ op |-> "e" ],
+
+```
+
+It is important to observe that the log statements only log the operation (deq|enq|wait) and the thread that calls wait. The log does not contain the size or content of the buffer, the thread that gets notified, or the thread that executes.
+
+(JFR requires Java 11 or newer).
+
+--------------------------------------------------------------------------
+
 ### v18 (TLAPS): Co-domain of buffer not relevant for proof.
 
 No need to say anything about the co-domain of buffer in the proof.  What is enqueued
