@@ -13,6 +13,160 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v21 (Traces): Validate long executions against the spec.
+
+The previous step showed that trace validation is probabilistic and has no guarantees of finding violations of the high-level spec.  Thus, we want to increase the chance by checking a long or many traces.  However, copying long traces into the spec is not only a nuisance, but also slows down [SANY](https://github.com/tlaplus/tlaplus/issues/413#issuecomment-571024785).  This step introduces how to [serialize the app's output](./impl/src/org/kuppe/App2TLA.java) in a format that TLC can de-serialize efficiently with the help of the [IOUtils module](https://github.com/tlaplus/CommunityModules/blob/master/modules/IOUtils.tla).
+
+```bash
+java -XX:StartFlightRecording=disk=true,dumponexit=true,filename=app-$(date +%s).jfr -cp impl/src/ org.kuppe.App
+
+# Kill the process after a while.
+
+# app-XXXXXXX.jfr is the flight recording created by the previous command.
+# app-XXXXXXX.bin is the serialized app output.
+java -cp tla2tools.jar:impl/src/ org.kuppe.App2TLA app-XXXXXXX.jfr app-$(date +%s).bin
+```
+
+With the longer trace (note the change in ```BlockingQueueTrace.tla```), we are lucky and TLC finds a violation:
+
+```tla
+$ java -cp /opt/TLA+Toolbox/tla2tools.jar:CommunityModules.jar tlc2.TLC BlockingQueueTrace
+TLC2 Version 2.15 of Day Month 20?? (rev: 52e91aa)
+Warning: Please run the Java VM which executes TLC with a throughput optimized garbage collector by passing the "-XX:+UseParallelGC" property.
+(Use the -nowarning option to disable this warning.)
+Running breadth-first search Model-Checking with fp 10 and seed -2300318498630499187 with 1 worker on 4 cores with 5964MB heap and 64MB offheap memory [pid: 32602] (Linux 4.18.0-16-generic amd64, Azul Systems, Inc. 11.0.6 x86_64, MSBDiskFPSet, DiskStateQueue).
+Parsing file /home/markus/src/TLA/_specs/models/tutorials/BlockingQueueTLA/BlockingQueueTrace.tla
+Parsing file /tmp/TLC.tla
+Parsing file /tmp/Sequences.tla
+Parsing file /tmp/Naturals.tla
+Parsing file /tmp/FiniteSets.tla
+Parsing file /tmp/IOUtils.tla
+Parsing file /home/markus/src/TLA/_specs/models/tutorials/BlockingQueueTLA/BlockingQueue.tla
+Parsing file /home/markus/src/TLA/_specs/models/tutorials/BlockingQueueTLA/TLAPS.tla
+Semantic processing of module Naturals
+Semantic processing of module Sequences
+Semantic processing of module FiniteSets
+Semantic processing of module TLC
+Semantic processing of module IOUtils
+Semantic processing of module TLAPS
+Semantic processing of module BlockingQueue
+Semantic processing of module BlockingQueueTrace
+Starting... (2020-01-25 20:32:19)
+Failed to match TLCExt!AssertError operator override from jar:file:/home/markus/src/TLA/_specs/models/tutorials/BlockingQueueTLA/CommunityModules.jar!/tlc2/overrides/TLCExt.class with signature: <Java Method: public static synchronized tlc2.value.impl.Value tlc2.overrides.TLCExt.assertError(tlc2.tool.impl.Tool,tla2sany.semantic.ExprOrOpArgNode[],tlc2.util.Context,tlc2.tool.TLCState,tlc2.tool.TLCState,int,tlc2.tool.coverage.CostModel)> (no such module).
+Failed to match TLCExt!PickSuccessor operator override from jar:file:/home/markus/src/TLA/_specs/models/tutorials/BlockingQueueTLA/CommunityModules.jar!/tlc2/overrides/TLCExt.class with signature: <Java Method: public static synchronized tlc2.value.impl.Value tlc2.overrides.TLCExt.pickSuccessor(tlc2.tool.impl.Tool,tla2sany.semantic.ExprOrOpArgNode[],tlc2.util.Context,tlc2.tool.TLCState,tlc2.tool.TLCState,int,tlc2.tool.coverage.CostModel)> (no such module).
+Loading IODeserialize operator override from tlc2.overrides.IOUtils with signature: <Java Method: public static final tlc2.value.IValue tlc2.overrides.IOUtils.deserialize(tlc2.value.impl.StringValue,tlc2.value.impl.BoolValue) throws java.io.IOException>.
+Loading IOSerialize operator override from tlc2.overrides.IOUtils with signature: <Java Method: public static final tlc2.value.IValue tlc2.overrides.IOUtils.serialize(tlc2.value.IValue,tlc2.value.impl.StringValue,tlc2.value.impl.BoolValue) throws java.io.IOException>.
+Implied-temporal checking--satisfiability problem has 1 branches.
+Computing initial states...
+Finished computing initial states: 1 distinct state generated at 2020-01-25 20:32:19.
+Error: Action property line 75, col 17 to line 75, col 29 of module BlockingQueue is violated.
+Error: The behavior up to this point is:
+State 1: <Initial predicate>
+/\ buffer = <<>>
+/\ i = 1
+/\ waitSet = {}
+
+State 2: <waitC line 149, col 10 to line 154, col 28 of module BlockingQueueTrace>
+/\ buffer = <<>>
+/\ i = 2
+/\ waitSet = {"c1"}
+
+State 3: <put line 156, col 8 to line 166, col 73 of module BlockingQueueTrace>
+/\ buffer = <<"p1">>
+/\ i = 3
+/\ waitSet = {}
+
+State 4: <put line 156, col 8 to line 166, col 73 of module BlockingQueueTrace>
+/\ buffer = <<"p1", "p1">>
+/\ i = 4
+/\ waitSet = {}
+
+State 5: <get line 168, col 8 to line 173, col 32 of module BlockingQueueTrace>
+/\ buffer = <<"p1">>
+/\ i = 5
+/\ waitSet = {}
+
+State 6: <put line 156, col 8 to line 166, col 73 of module BlockingQueueTrace>
+/\ buffer = <<"p1", "p1">>
+/\ i = 6
+/\ waitSet = {}
+
+State 7: <get line 168, col 8 to line 173, col 32 of module BlockingQueueTrace>
+/\ buffer = <<"p1">>
+/\ i = 7
+/\ waitSet = {}
+
+State 8: <put line 156, col 8 to line 166, col 73 of module BlockingQueueTrace>
+/\ buffer = <<"p1", "p1">>
+/\ i = 8
+/\ waitSet = {}
+
+State 9: <put line 156, col 8 to line 166, col 73 of module BlockingQueueTrace>
+/\ buffer = <<"p1", "p1", "p1">>
+/\ i = 9
+/\ waitSet = {}
+
+State 10: <waitP line 139, col 10 to line 147, col 28 of module BlockingQueueTrace>
+/\ buffer = <<"p1", "p1", "p1">>
+/\ i = 10
+/\ waitSet = {"p1"}
+
+State 11: <get line 168, col 8 to line 173, col 32 of module BlockingQueueTrace>
+/\ buffer = <<"p1", "p1">>
+/\ i = 11
+/\ waitSet = {}
+
+State 12: <put line 156, col 8 to line 166, col 73 of module BlockingQueueTrace>
+/\ buffer = <<"p1", "p1", "p1">>
+/\ i = 12
+/\ waitSet = {}
+
+State 13: <waitP line 139, col 10 to line 147, col 28 of module BlockingQueueTrace>
+/\ buffer = <<"p1", "p1", "p1">>
+/\ i = 13
+/\ waitSet = {"p1"}
+
+State 14: <waitP line 139, col 10 to line 147, col 28 of module BlockingQueueTrace>
+/\ buffer = <<"p1", "p1", "p1">>
+/\ i = 14
+/\ waitSet = {"p1", "p2"}
+
+State 15: <get line 168, col 8 to line 173, col 32 of module BlockingQueueTrace>
+/\ buffer = <<"p1", "p1">>
+/\ i = 15
+/\ waitSet = {"p1"}
+
+State 16: <put line 156, col 8 to line 166, col 73 of module BlockingQueueTrace>
+/\ buffer = <<"p1", "p1", "p2">>
+/\ i = 16
+/\ waitSet = {}
+
+2529 states generated, 1169 distinct states found, 63 states left on queue.
+The depth of the complete state graph search is 16.
+The average outdegree of the complete state graph is 1 (minimum is 0, the maximum 4 and the 95th percentile is 4).
+Finished in 01s at (2020-01-25 20:32:20)
+```
+
+Convince yourself that TLC has indeed reported a violation of the high-level spec that is due to single-mutex bug.  Do so by re-running TLC with the two-mutex fix temporarily reverted (TLC reports no error):
+
+```diff
+diff --git a/BlockingQueue.tla b/BlockingQueue.tla
+index aba689d..d5d2e41 100644
+--- a/BlockingQueue.tla
++++ b/BlockingQueue.tla
+@@ -19,7 +19,7 @@ vars == <<buffer, waitSet>>
+ RunningThreads == (Producers \cup Consumers) \ waitSet
+ 
+ NotifyOther(t) == 
+-          LET S == IF t \in Producers THEN waitSet \ Producers ELSE waitSet \ Consumers
++          LET S == waitSet
+           IN IF S # {}
+              THEN \E x \in S : waitSet' = waitSet \ {x}
+              ELSE UNCHANGED waitSet
+```
+
+In a real project, trace validation provides confidence that an implementation faithfully implements its high-level (TLA+) spec.  This is why we want to check as many traces as possible. However, we will never have proof that the implementation correctly implements its spec.  Note that [coverage](https://arxiv.org/abs/1912.10633) of the high-level spec (similar to code coverage measured for unit tests) indicates to what extent the trace explore the state space. 
+
 ### v20 (Traces): Validate implementation executions against the spec.
 
 The top of the ```BlockingQueueTrace``` spec defines a ```Trace``` operator that is the the execution that we printed to stdout in the previous step.  The rest of the spec follows [Ron Pressler's](https://pron.github.io/tlaplus) ```Trace3``` method (refinement mapping) described in ["Verifying Software Traces Against a Formal Specification with TLA+ and TLC"](https://pron.github.io/files/Trace.pdf).  The comments in ```BlockingQueueTrace``` discuss how non-determinism compensates for the incomplete (actual value of buffer, ...) application log.
