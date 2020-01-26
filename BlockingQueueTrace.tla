@@ -118,7 +118,10 @@ TraceShort == <<
 [ op |-> "e" ]
 >>
 
-Trace == TraceShort
+
+INSTANCE IOUtils
+
+Trace == IODeserialize("app-123.bin", TRUE)
 
 -----------------------------------------------------------------------------
 
