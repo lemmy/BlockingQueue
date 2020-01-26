@@ -1,5 +1,9 @@
 package org.kuppe;
 
+import org.kuppe.App2TLA.BufferDeqEvent;
+import org.kuppe.App2TLA.BufferEnqEvent;
+import org.kuppe.App2TLA.BufferWaitEvent;
+
 public final class BlockingQueue<E> {
 
 	private final E[] store;
@@ -21,6 +25,7 @@ public final class BlockingQueue<E> {
 	 */
 	public synchronized void put(final E e) throws InterruptedException {
 		while (isFull()) {
+			new BufferWaitEvent("p").commit();
 			System.out.println("Buffer full; P waits");
 			wait();
 			System.out.println("P notified");
@@ -28,6 +33,7 @@ public final class BlockingQueue<E> {
 		notify();
 		
 		// Add e and do bookkeeping.
+		new BufferEnqEvent().commit();
 		append(e);
 	}
 
@@ -39,6 +45,7 @@ public final class BlockingQueue<E> {
 	 */
 	public synchronized E take() throws InterruptedException {
 		while (isEmpty()) {
+			new BufferWaitEvent("c").commit();
 			System.out.println("Buffer empty; C waits");
 			wait();
 			System.out.println("C notified");
@@ -46,6 +53,7 @@ public final class BlockingQueue<E> {
 		notify();
 		
 		// Remove e and do bookkeeping.
+		new BufferDeqEvent().commit();
 		return head();
 	}
 	
