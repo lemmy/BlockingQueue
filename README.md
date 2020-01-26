@@ -13,6 +13,53 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v20 (Traces): Validate implementation executions against the spec.
+
+The top of the ```BlockingQueueTrace``` spec defines a ```Trace``` operator that is the the execution that we printed to stdout in the previous step.  The rest of the spec follows [Ron Pressler's](https://pron.github.io/tlaplus) ```Trace3``` method (refinement mapping) described in ["Verifying Software Traces Against a Formal Specification with TLA+ and TLC"](https://pron.github.io/files/Trace.pdf).  The comments in ```BlockingQueueTrace``` discuss how non-determinism compensates for the incomplete (actual value of buffer, ...) application log.
+
+Checking the spec shows that TLC found 4410 distinct states even though the trace is only ~107 states long.  This is because of the non-determinism we deliberately introduced.  Surprisingly, however, the implementation trace does not violate the high-level spec ```BlockingQueue```:
+
+```bash
+$ java -cp /opt/TLA+Toolbox/tla2tools.jar:CommunityModules.jar tlc2.TLC BlockingQueueTrace
+TLC2 Version 2.15 of Day Month 20?? (rev: 52e91aa)
+Warning: Please run the Java VM which executes TLC with a throughput optimized garbage collector by passing the "-XX:+UseParallelGC" property.
+(Use the -nowarning option to disable this warning.)
+Running breadth-first search Model-Checking with fp 35 and seed -8345104333501302295 with 1 worker on 4 cores with 5964MB heap and 64MB offheap memory [pid: 27542] (Linux 4.18.0-16-generic amd64, Azul Systems, Inc. 11.0.6 x86_64, MSBDiskFPSet, DiskStateQueue).
+Parsing file /home/markus/src/TLA/_specs/models/tutorials/BlockingQueueTLA/BlockingQueueTrace.tla
+Parsing file /tmp/TLC.tla
+Parsing file /tmp/Sequences.tla
+Parsing file /tmp/Naturals.tla
+Parsing file /tmp/FiniteSets.tla
+Parsing file /home/markus/src/TLA/_specs/models/tutorials/BlockingQueueTLA/BlockingQueue.tla
+Parsing file /home/markus/src/TLA/_specs/models/tutorials/BlockingQueueTLA/TLAPS.tla
+Semantic processing of module Naturals
+Semantic processing of module Sequences
+Semantic processing of module FiniteSets
+Semantic processing of module TLC
+Semantic processing of module TLAPS
+Semantic processing of module BlockingQueue
+Semantic processing of module BlockingQueueTrace
+Starting... (2020-01-25 17:48:08)
+Failed to match TLCExt!AssertError operator override from jar:file:/home/markus/src/TLA/_specs/models/tutorials/BlockingQueueTLA/CommunityModules.jar!/tlc2/overrides/TLCExt.class with signature: <Java Method: public static synchronized tlc2.value.impl.Value tlc2.overrides.TLCExt.assertError(tlc2.tool.impl.Tool,tla2sany.semantic.ExprOrOpArgNode[],tlc2.util.Context,tlc2.tool.TLCState,tlc2.tool.TLCState,int,tlc2.tool.coverage.CostModel)> (no such module).
+Failed to match TLCExt!PickSuccessor operator override from jar:file:/home/markus/src/TLA/_specs/models/tutorials/BlockingQueueTLA/CommunityModules.jar!/tlc2/overrides/TLCExt.class with signature: <Java Method: public static synchronized tlc2.value.impl.Value tlc2.overrides.TLCExt.pickSuccessor(tlc2.tool.impl.Tool,tla2sany.semantic.ExprOrOpArgNode[],tlc2.util.Context,tlc2.tool.TLCState,tlc2.tool.TLCState,int,tlc2.tool.coverage.CostModel)> (no such module).
+Warning: Failed to match IODeserialize operator override from IOUtils with signature: public static final tlc2.value.IValue tlc2.overrides.IOUtils.deserialize(tlc2.value.impl.StringValue,tlc2.value.impl.BoolValue) throws java.io.IOException (no such module).
+Warning: Failed to match IOSerialize operator override from IOUtils with signature: public static final tlc2.value.IValue tlc2.overrides.IOUtils.serialize(tlc2.value.IValue,tlc2.value.impl.StringValue,tlc2.value.impl.BoolValue) throws java.io.IOException (no such module).
+Implied-temporal checking--satisfiability problem has 1 branches.
+Computing initial states...
+Finished computing initial states: 1 distinct state generated at 2020-01-25 17:48:08.
+Progress(109) at 2020-01-25 17:48:09: 8,424 states generated, 4,410 distinct states found, 0 states left on queue.
+Checking temporal properties for the complete state space with 4410 total distinct states at (2020-01-25 17:48:09)
+Finished checking temporal properties in 00s at 2020-01-25 17:48:09
+Model checking completed. No error has been found.
+  Estimates of the probability that TLC did not check all reachable states
+  because two distinct states had the same fingerprint:
+  calculated (optimistic):  val = 9.6E-13
+8424 states generated, 4410 distinct states found, 0 states left on queue.
+The depth of the complete state graph search is 109.
+The average outdegree of the complete state graph is 1 (minimum is 0, the maximum 4 and the 95th percentile is 4).
+Finished in 01s at (2020-01-25 17:48:09)
+```
+
 ### v19 (Traces): Print (partial) implementation executions.
 
 Having finished the proof of the deadlock fix below, we shift our attention to the (Java) implementation that we assume can still deadlock.  However, before we apply the fix of two mutexes, we use TLC to check if the implementation allows executions that violate the ```BlockingQueue``` spec.  In other words, we check if the implementation correctly implements the TLA+ spec (which we know it does not).  To do so, we print an execution to stdout with the help of the low-overhead [Java Flight Recorder](https://en.wikipedia.org/wiki/JDK_Flight_Recorder) that we can consider a very powerful logging framework.  However, plain logging to stdout - with a high-precision timestamp - would have worked too.   To activate JFR, run the app with:
