@@ -20,7 +20,7 @@ import tlc2.value.impl.TupleValue;
 import tlc2.value.impl.Value;
 import util.UniqueString;
 
-public class App2TLA {
+public class App2TLA2bak {
 
 	@Label("Buffer Deq Operation")
 	@Name("app.bufDeqOp")
