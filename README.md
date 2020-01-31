@@ -13,6 +13,20 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v09 (Animation): Add prophecy variable to simplify animation.
+
+The next-state relation has been restated to "predict"
+the value of t (threads) in the successor state. We
+will use the prophecy variable in the following
+commit to come up with an animation.
+    
+This and the following commit can be skipped unless
+you are interested in the more advanced concept of
+prophecy (http://lamport.azurewebsites.net/pubs/auxiliary.pdf)
+or animations (https://youtu.be/mLF220fPrP4).
+
+--------------------------------------------------------------------------
+
 ### v08b (trace): Check configurations up to 20 processes and buffer capacity 10.
 
 The state-space reduction due to the introduction of the view in the previous commits, allows TLC to check the spec for larger configurations, with which we can infer the error-trace length.
