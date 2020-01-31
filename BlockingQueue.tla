@@ -13,10 +13,10 @@ ASSUME Assumption ==
        
 -----------------------------------------------------------------------------
 
-VARIABLES buffer, waitSet
-vars == <<buffer, waitSet>>
+VARIABLES buffer, waitSet, producers, consumers, bufCapacity
+vars == <<buffer, waitSet, producers, consumers, bufCapacity>>
 
-RunningThreads == (Producers \cup Consumers) \ waitSet
+RunningThreads == (producers \cup consumers) \ waitSet
 
 (* @see java.lang.Object#notify *)       
 Notify == IF waitSet # {}
@@ -30,10 +30,10 @@ Wait(t) == /\ waitSet' = waitSet \cup {t}
 -----------------------------------------------------------------------------
 
 Put(t, d) ==
-   \/ /\ Len(buffer) < BufCapacity
+   \/ /\ Len(buffer) < bufCapacity
       /\ buffer' = Append(buffer, d)
       /\ Notify
-   \/ /\ Len(buffer) = BufCapacity
+   \/ /\ Len(buffer) = bufCapacity
       /\ Wait(t)
       
 Get(t) ==
@@ -48,21 +48,26 @@ Get(t) ==
 (* Initially, the buffer is empty and no thread is waiting. *)
 Init == /\ buffer = <<>>
         /\ waitSet = {}
+        /\ producers \in (SUBSET Producers) \ {{}}
+        /\ consumers \in (SUBSET Consumers) \ {{}}
+        /\ bufCapacity \in 1..BufCapacity
 
 (* Then, pick a thread out of all running threads and have it do its thing. *)
-Next == \E t \in RunningThreads: \/ /\ t \in Producers
+Next == 
+    /\  UNCHANGED <<producers, consumers, bufCapacity>>
+    /\ \E t \in RunningThreads: \/ /\ t \in producers
                                     /\ Put(t, t) \* Add some data to buffer
-                                 \/ /\ t \in Consumers
+                                 \/ /\ t \in consumers
                                     /\ Get(t)
 
 -----------------------------------------------------------------------------
 
 (* TLA+ is untyped, thus lets verify the range of some values in each state. *)
 TypeInv == /\ buffer \in Seq(Producers)
-           /\ Len(buffer) \in 0..BufCapacity
-           /\ waitSet \subseteq (Producers \cup Consumers)
+           /\ Len(buffer) \in 0..bufCapacity
+           /\ waitSet \subseteq (producers \cup consumers)
 
 (* No Deadlock *)
-Invariant == waitSet # (Producers \cup Consumers)
+Invariant == waitSet # (producers \cup consumers)
 
 =============================================================================
