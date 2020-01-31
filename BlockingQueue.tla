@@ -1,5 +1,5 @@
 --------------------------- MODULE BlockingQueue ---------------------------
-EXTENDS Naturals, Sequences, FiniteSets
+EXTENDS Naturals, Sequences, FiniteSets, TLC
 
 CONSTANTS Producers,   (* the (nonempty) set of producers                       *)
           Consumers,   (* the (nonempty) set of consumers                       *)
@@ -69,5 +69,8 @@ TypeInv == /\ buffer \in Seq(Producers)
 
 (* No Deadlock *)
 Invariant == waitSet # (producers \cup consumers)
+
+(* The Permutations operator is defined in the TLC module. *)
+Sym == Permutations(Producers) \union Permutations(Consumers)
 
 =============================================================================
