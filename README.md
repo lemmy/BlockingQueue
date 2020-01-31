@@ -10,6 +10,20 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v09 (Animation): Add prophecy variable to simplify animation.
+
+The next-state relation has been restated to "predict"
+the value of t (threads) in the successor state. We
+will use the prophecy variable in the following
+commit to come up with an animation.
+    
+This and the following commit can be skipped unless
+you are interested in the more advanced concept of
+prophecy (http://lamport.azurewebsites.net/pubs/auxiliary.pdf)
+or animations (https://youtu.be/mLF220fPrP4).
+
+--------------------------------------------------------------------------
+
 ### v08 (continue): Infer inequation under which the system is deadlock free.
 
 Based on the scaffolding in the two previous steps, we run TLC with the [```-continue```](https://lamport.azurewebsites.net/tla/tlc-options.html?back-link=tools.html) option to not stop state space exploration after a violation of the invariant has been found.  In other words, we ask TLC to find all violations, not just one of the shortest ones (Breadth-First search guarantees that TLC finds the shortest counterexample first).
