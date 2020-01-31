@@ -1,5 +1,5 @@
 --------------------------- MODULE BlockingQueue ---------------------------
-EXTENDS Naturals, Sequences, FiniteSets, TLC
+EXTENDS Naturals, Sequences, FiniteSets
 
 CONSTANTS Producers,   (* the (nonempty) set of producers                       *)
           Consumers,   (* the (nonempty) set of consumers                       *)
@@ -13,10 +13,10 @@ ASSUME Assumption ==
        
 -----------------------------------------------------------------------------
 
-VARIABLES buffer, waitSet, producers, consumers, bufCapacity
-vars == <<buffer, waitSet, producers, consumers, bufCapacity>>
+VARIABLES buffer, waitSet, thread
+vars == <<buffer, waitSet, thread>>
 
-RunningThreads == (producers \cup consumers) \ waitSet
+RunningThreads == (Producers \cup Consumers) \ waitSet
 
 (* @see java.lang.Object#notify *)       
 Notify == IF waitSet # {}
@@ -30,10 +30,10 @@ Wait(t) == /\ waitSet' = waitSet \cup {t}
 -----------------------------------------------------------------------------
 
 Put(t, d) ==
-   \/ /\ Len(buffer) < bufCapacity
+   \/ /\ Len(buffer) < BufCapacity
       /\ buffer' = Append(buffer, d)
       /\ Notify
-   \/ /\ Len(buffer) = bufCapacity
+   \/ /\ Len(buffer) = BufCapacity
       /\ Wait(t)
       
 Get(t) ==
@@ -48,32 +48,29 @@ Get(t) ==
 (* Initially, the buffer is empty and no thread is waiting. *)
 Init == /\ buffer = <<>>
         /\ waitSet = {}
-        /\ producers \in (SUBSET Producers) \ {{}}
-        /\ consumers \in (SUBSET Consumers) \ {{}}
-        /\ bufCapacity \in 1..BufCapacity
+        /\ thread \in (Producers \cup Consumers)
 
 (* Then, pick a thread out of all running threads and have it do its thing. *)
-Next == 
-    /\  UNCHANGED <<producers, consumers, bufCapacity>>
-    /\ \E t \in RunningThreads: \/ /\ t \in producers
-                                    /\ Put(t, t) \* Add some data to buffer
-                                 \/ /\ t \in consumers
-                                    /\ Get(t)
+\* Next rewritten to predict the value of a prophecy variable
+\* http://lamport.azurewebsites.net/pubs/auxiliary.pdf
+\* (https://github.com/lorin/tla-prophecy)
+Next == \/ /\ thread \notin waitSet                        \* Pred_A(i)
+           /\ thread' \in (Producers \cup Consumers)       \* Setp
+           /\ \/ /\ thread \in Producers                   \* A
+                 /\ Put(thread, thread) \* Add some data to buffer
+              \/ /\ thread \in Consumers
+                 /\ Get(thread)
+        \/ /\ thread \in waitSet
+           /\ UNCHANGED vars
 
 -----------------------------------------------------------------------------
 
 (* TLA+ is untyped, thus lets verify the range of some values in each state. *)
 TypeInv == /\ buffer \in Seq(Producers)
-           /\ Len(buffer) \in 0..bufCapacity
-           /\ waitSet \subseteq (producers \cup consumers)
+           /\ Len(buffer) \in 0..BufCapacity
+           /\ waitSet \subseteq (Producers \cup Consumers)
 
 (* No Deadlock *)
-Invariant == IF waitSet # (producers \cup consumers)
-             THEN TRUE \* Inv not violated.
-             ELSE PrintT(<<"InvVio", bufCapacity, Cardinality(producers \cup consumers)>>) /\ FALSE
+Invariant == waitSet # (Producers \cup Consumers)
 
-(* The Permutations operator is defined in the TLC module. *)
-Sym == Permutations(Producers) \union Permutations(Consumers)
-
-View == <<Len(buffer), waitSet, producers, consumers, bufCapacity>>
 =============================================================================
