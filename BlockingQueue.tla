@@ -68,7 +68,9 @@ TypeInv == /\ buffer \in Seq(Producers)
            /\ waitSet \subseteq (producers \cup consumers)
 
 (* No Deadlock *)
-Invariant == waitSet # (producers \cup consumers)
+Invariant == IF waitSet # (producers \cup consumers)
+             THEN TRUE \* Inv not violated.
+             ELSE PrintT(<<"InvVio", bufCapacity, Cardinality(producers \cup consumers)>>) /\ FALSE
 
 (* The Permutations operator is defined in the TLC module. *)
 Sym == Permutations(Producers) \union Permutations(Consumers)
