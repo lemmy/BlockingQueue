@@ -11,7 +11,7 @@ uint32_t *buffer;
 uint32_t fillIndex, useIndex, count = 0;
 
 // See https://stackoverflow.com/a/2087046/6291195 to relate this to the Java impl.
-pthread_cond_t modify;
+pthread_cond_t empty, full; 
 pthread_mutex_t mutex;
 
 void append(uint32_t value) {
@@ -35,7 +35,7 @@ void *producer (void * arg) {
 			printf("w#p#-1\n");	fflush(stdout);
 			#endif
 
-		    pthread_cond_wait(&modify, &mutex);
+		    pthread_cond_wait(&empty, &mutex);
 		}
 		
 		append(rand() % (10));        // produce!
@@ -43,7 +43,7 @@ void *producer (void * arg) {
 		printf("e#p#-1\n"); fflush(stdout);
 		#endif
 
-		pthread_cond_signal(&modify); // broadcast that the buffer is full
+		pthread_cond_signal(&full); // broadcast that the buffer is full
         pthread_mutex_unlock(&mutex); // release the lock
 	}
 }
@@ -59,15 +59,15 @@ void *consumer (void * arg) {
 			printf("w#c#%d\n", id); fflush(stdout);
 			#endif
 
-			pthread_cond_wait(&modify, &mutex); // wait for the buffer to be filled
+			pthread_cond_wait(&full, &mutex); // wait for the buffer to be filled
 		}
 
 		head();                       // consume (we don't care about the value)!
 		#ifdef TRACE
 		printf("d#c#%d\n", id);  fflush(stdout);
 		#endif
-
-		pthread_cond_signal(&modify); // signal that the buffer is empty
+		
+		pthread_cond_signal(&empty); // signal that the buffer is empty
 		pthread_mutex_unlock(&mutex); // release the lock
 		
 		#ifndef TRACE 
@@ -96,7 +96,8 @@ int main(int argc, char * argv[]) {
 	#endif
 
 	pthread_mutex_init(&mutex, NULL);
-	pthread_cond_init(&modify, NULL);
+	pthread_cond_init(&empty, NULL);
+	pthread_cond_init(&full, NULL);
 
 	/* Allocate space for the buffer */
 	buffer = malloc(sizeof(int) * buff_size);
