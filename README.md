@@ -13,6 +13,10 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v22 (Refinement): Create BlockingQueueSplit with two sets waitP and waitC.
+
+The bugfix below exploited the power of ([Zermelo-Fraenkel](https://en.wikipedia.org/wiki/Zermelo%E2%80%93Fraenkel_set_theory)) set theory to get away without changing ```waitSet``` into two (disjoint) sets; one for waiting ```Producers``` and one for waiting ```Consumers``` (we will call them ```waitP``` and ```waitC``` respectively).  In a real-world program, however, the elegance of math is likely too inefficient which is why a program would indeed maintain ```waitP``` and ```waitP``` to avoid intersecting ```Producers``` and ```Consumers``` from ```waitSet``` over and over again (which probably allocates temporary memory too).  In an actual project, we would probably spend no more than a few minutes on analyzing if separating ```waitSet``` into ```waitP``` and ```waitC``` can introduce a deadlock again.  Here, we have the luxury of time and thus write a new spec ```BlockingQueueSplit.tla```.  Fortunately, most of ```BlockingQueueSplit.tla``` is identical to ```BlockingQueue.tla``` which is why we copy&paste from ```BlockingQueue``` before we modify ```NotifyOther```.
+
 ### v21 (Traces): Validate long executions against the spec.
 
 The previous step showed that trace validation is probabilistic and has no guarantees of finding violations of the high-level spec.  Thus, we want to increase the chance by checking a long or many traces.  However, copying long traces into the spec is not only a nuisance, but also slows down [SANY](https://github.com/tlaplus/tlaplus/issues/413#issuecomment-571024785).  This step introduces how to [serialize the app's output](./impl/src/org/kuppe/App2TLA.java) in a format that TLC can de-serialize efficiently with the help of the [IOUtils module](https://github.com/tlaplus/CommunityModules/blob/master/modules/IOUtils.tla).
