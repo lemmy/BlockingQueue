@@ -24,7 +24,7 @@ jobs:
         chmod +x tlaps-1.4.5-x86_64-linux-gnu-inst.bin
         ./tlaps-1.4.5-x86_64-linux-gnu-inst.bin -d tlaps
     - name: Run TLAPS
-      run: tlaps/bin/tlapm --cleanfp -I tlaps/ BlockingQueue.tla
+      run: tlaps/bin/tlapm --cleanfp -I tlaps/ BlockingQueue.tla BlockingQueueSplit.tla
     - name: Get (nightly) TLC
       run: wget https://nightly.tlapl.us/dist/tla2tools.jar
     - name: Run TLC
