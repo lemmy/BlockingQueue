@@ -1,5 +1,8 @@
 package org.kuppe;
 
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
+
 import org.kuppe.App2TLA.BufferDeqEvent;
 import org.kuppe.App2TLA.BufferEnqEvent;
 import org.kuppe.App2TLA.BufferWaitEvent;
@@ -8,6 +11,10 @@ public final class BlockingQueue<E> {
 
 	private final E[] store;
 	
+	private final ReentrantLock lock;
+	private final Condition waitC;
+	private final Condition waitP;
+	
 	private int head;
 	private int tail;
 	private int size;
@@ -15,6 +22,11 @@ public final class BlockingQueue<E> {
 	@SuppressWarnings("unchecked")
 	public BlockingQueue(final int capacity) {
 		this.store = (E[]) new Object[capacity];
+		
+		// see BlockingQueueSplit.tla
+		this.lock = new ReentrantLock();
+		this.waitC = lock.newCondition();
+		this.waitP = lock.newCondition();
 	}
 
 	/**
@@ -23,18 +35,24 @@ public final class BlockingQueue<E> {
 	 * 
 	 * @see {@link BlockingQueue#take()}.
 	 */
-	public synchronized void put(final E e) throws InterruptedException {
-		while (isFull()) {
-			new BufferWaitEvent("p").commit();
-			System.out.println("Buffer full; P waits");
-			wait();
-			System.out.println("P notified");
+	public void put(final E e) throws InterruptedException {
+		final ReentrantLock lock = this.lock;
+		lock.lock();
+		try {
+			while (isFull()) {
+				new BufferWaitEvent("p").commit();
+				System.out.println("Buffer full; P waits");
+				waitP.await();
+				System.out.println("P notified");
+			}
+			waitC.signal();
+
+			// Add e and do bookkeeping.
+			new BufferEnqEvent().commit();
+			append(e);
+		} finally {
+			lock.unlock();
 		}
-		notify();
-		
-		// Add e and do bookkeeping.
-		new BufferEnqEvent().commit();
-		append(e);
 	}
 
 	/**
@@ -43,18 +61,24 @@ public final class BlockingQueue<E> {
 	 * 
 	 * @see {@link BlockingQueue#put(Object)}.
 	 */
-	public synchronized E take() throws InterruptedException {
-		while (isEmpty()) {
-			new BufferWaitEvent("c").commit();
-			System.out.println("Buffer empty; C waits");
-			wait();
-			System.out.println("C notified");
-		}
-		notify();
-		
-		// Remove e and do bookkeeping.
-		new BufferDeqEvent().commit();
-		return head();
+	public E take() throws InterruptedException {
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
+    		while (isEmpty()) {
+    			new BufferWaitEvent("c").commit();
+    			System.out.println("Buffer empty; C waits");
+    			waitC.await();
+    			System.out.println("C notified");
+    		}
+    		waitP.signal();
+    		
+    		// Remove e and do bookkeeping.
+    		new BufferDeqEvent().commit();
+    		return head();
+        } finally {
+            lock.unlock();
+        }
 	}
 	
 	

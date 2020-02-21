@@ -13,6 +13,10 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v25 (Refinement): Implement BlockingQueueSplit spec in Java and C.
+
+Knowing that ```BlockingQueueSplit``` refines ```BlockingQueue``` and thus is deadlock-free, we shift our attention to the Java (and C) program.  Instead of Java's ```synchronized``` statement, we implement BlockingQueueSplit with the help of the low-level synchronization primitive ```java.util.concurrent.locks.ReentrantLock``` and ```java.util.concurrent.locks.Condition```.  Executing the new program for a couple of hours with configuration p2c1b1 reveals no deadlock (the broken version of the program deadlocked within seconds).  This, and the fact that Java's own [```ArrayBlockingQueue```](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/ArrayBlockingQueue.html) has a similar implementation, should silence our concerns to put the program into production.
+
 ### v24 (Refinement): Prove refinement mapping of BlockingQueueSplit.
 
 Below, TLC checked the refinement mapping for a finite model/particular configuration, which gives for ```BlockingQueueSplit``` sufficient confidence that the refinement mapping is correct.  The fact that the refinement mapping is straight forward indicates that a TLAPS prove is likely straight forward too. So let's give in to the academic in us and prove the correctness of the refinement mapping.  To prove that ```BlockingQueueSplit``` implements ```BlockingQueue```, we first prove ```TypeInv``` inductive with the now know invariance proof rule.  Once we have proven this LEMMA, we reuse it and the [proof rule for refinement (section 4.2)](https://members.loria.fr/SMerz/papers/tla+logic2008.pdf) to prove ```THEOREM Implements == Spec => A!Spec```.
