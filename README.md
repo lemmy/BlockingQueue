@@ -13,6 +13,12 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v24 (Refinement): Prove refinement mapping of BlockingQueueSplit.
+
+Below, TLC checked the refinement mapping for a finite model/particular configuration, which gives for ```BlockingQueueSplit``` sufficient confidence that the refinement mapping is correct.  The fact that the refinement mapping is straight forward indicates that a TLAPS prove is likely straight forward too. So let's give in to the academic in us and prove the correctness of the refinement mapping.  To prove that ```BlockingQueueSplit``` implements ```BlockingQueue```, we first prove ```TypeInv``` inductive with the now know invariance proof rule.  Once we have proven this LEMMA, we reuse it and the [proof rule for refinement (section 4.2)](https://members.loria.fr/SMerz/papers/tla+logic2008.pdf) to prove ```THEOREM Implements == Spec => A!Spec```.
+
+In addition, we re-prove deadlock freedom directly at the level of ```BlockingQueueSplit``` by giving an inductive invariant ```IInv``` that mirrors ```BlockingQueue!IInv``` translated to the split form. The companion ```THEOREM IInvRefines == ASSUME IInv PROVE A!IInv``` is *not* a refinement of the two specs (that is what ```THEOREM Implements``` already does); it merely shows that the low-level inductive invariant ```IInv``` implies the high-level inductive invariant ```A!IInv``` pointwise.  In other words, this is refinement at the level of two state predicates (invariants), not at the level of the two state machines.
+
 ### v23 (Refinement): Refine BlockingQueue with BlockingQueueSplit.
 
 The specs ```BlockingQueueSplit.tla``` and ```BlockingQueue.tla``` look almost identical, except ```BlockingQueueSplit.tla``` has one more variable and slightly different definitions for ```Put```, ```Get```, ```Wait```, and ```NotifyOther```.  However, there is no (logical) connection between the two specs, albeit spec ```BlockingQueueSplit``` can be considered an implementation of ```BlockingQueue```. 
