@@ -13,6 +13,18 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v23 (Refinement): Refine BlockingQueue with BlockingQueueSplit.
+
+The specs ```BlockingQueueSplit.tla``` and ```BlockingQueue.tla``` look almost identical, except ```BlockingQueueSplit.tla``` has one more variable and slightly different definitions for ```Put```, ```Get```, ```Wait```, and ```NotifyOther```.  However, there is no (logical) connection between the two specs, albeit spec ```BlockingQueueSplit``` can be considered an implementation of ```BlockingQueue```. 
+
+This is where TLA's [secret power](https://news.ycombinator.com/item?id=21669689) comes into play. In an earlier step, we wrote ```THEOREM DeadlockFreedom == Spec => []Invariant``` to state that ```BlockingQueue``` satisfies ```[]Invariant``` where ```[]Invariant``` was a (safety) property.  However, TLA does not distinguish between properties and (machine) specs; both are "just" formulas.  This power means that we may also say that the spec defined in ```BlockingQueueSplit``` satisfies/implements the machine spec ```BlockingQueue``` by stating ```THEOREM Implements == Spec => BlockingQueue!Spec```.  
+
+We are almost done. However, since ```BlockingQueueSplit``` differs slightly from ```BlockingQueue```, we have to provide a [refinement mapping](https://lamport.azurewebsites.net/tla/hiding-and-refinement.pdf) that relates the low-level spec to the high-level spec. In the case of ```BlockingQueueSplit```, it is fortunately straight forward: the union of ```waitC``` and ```waitP``` maps to ```waitSet```.
+
+We can verify the correctness of the refinement mapping (for a finite model) with TLC again.  This time though, TLC does not check an invariant (state formula) but the (temporal) property ```BlockingQueue!Spec```.
+
+Sidenote: "TLA" above is *not* a typo! Read Lamport's [The Temporal Logic of Actions](https://lamport.azurewebsites.net/pubs/lamport-actions.pdf) to understand why.
+
 ### v22 (Refinement): Create BlockingQueueSplit with two sets waitP and waitC.
 
 The bugfix below exploited the power of ([Zermelo-Fraenkel](https://en.wikipedia.org/wiki/Zermelo%E2%80%93Fraenkel_set_theory)) set theory to get away without changing ```waitSet``` into two (disjoint) sets; one for waiting ```Producers``` and one for waiting ```Consumers``` (we will call them ```waitP``` and ```waitC``` respectively).  In a real-world program, however, the elegance of math is likely too inefficient which is why a program would indeed maintain ```waitP``` and ```waitP``` to avoid intersecting ```Producers``` and ```Consumers``` from ```waitSet``` over and over again (which probably allocates temporary memory too).  In an actual project, we would probably spend no more than a few minutes on analyzing if separating ```waitSet``` into ```waitP``` and ```waitC``` can introduce a deadlock again.  Here, we have the luxury of time and thus write a new spec ```BlockingQueueSplit.tla```.  Fortunately, most of ```BlockingQueueSplit.tla``` is identical to ```BlockingQueue.tla``` which is why we copy&paste from ```BlockingQueue``` before we modify ```NotifyOther```.
