@@ -67,4 +67,14 @@ Next == \/ \E p \in Producers: Put(p, p) \* Add some data to buffer
 
 Spec == Init /\ [][Next]_vars
 
+-----------------------------------------------------------------------------
+
+(* BlockingQueueSplit refines BlockingQueue. The refinement mapping is *)
+(* straight forward in this case. The union of waitSetC and waitSetP   *)
+(* maps to waitSet in the high-level spec BlockingQueue.               *)
+A == INSTANCE BlockingQueue WITH waitSet <- (waitSetC \cup waitSetP)
+
+(* A!Spec is not a valid value in the config BlockingQueueSplit.cfg.   *)
+ASpec == A!Spec
+
 =============================================================================
