@@ -52,7 +52,8 @@ Get(t) ==
 
 -----------------------------------------------------------------------------
 
-TypeInv == /\ Len(buffer) \in 0..BufCapacity
+TypeInv == /\ buffer \in Seq(Producers) 
+           /\ Len(buffer) \in 0..BufCapacity
            /\ waitSetP \in SUBSET Producers
            /\ waitSetC \in SUBSET Consumers
 
@@ -76,5 +77,28 @@ A == INSTANCE BlockingQueue WITH waitSet <- (waitSetC \cup waitSetP)
 
 (* A!Spec is not a valid value in the config BlockingQueueSplit.cfg.   *)
 ASpec == A!Spec
+
+-----------------------------------------------------------------------------
+
+INSTANCE TLAPS
+
+(* Scaffolding: TypeInv is inductive. *)
+LEMMA ITypeInv == Spec => []TypeInv
+<1> USE Assumption DEF TypeInv
+<1>1. Init => TypeInv
+  BY DEF Init
+<1>2. TypeInv /\ [Next]_vars => TypeInv'
+  BY DEF Next, vars, Put, Get, Wait, NotifyOther
+<1>3. QED
+  BY <1>1, <1>2, PTL DEF Spec
+
+THEOREM Implements == Spec => A!Spec
+<1> USE Assumption, A!Assumption
+<1>1. Init => A!Init 
+   BY DEF Init, A!Init
+<1>2. TypeInv /\ [Next]_vars => [A!Next]_A!vars
+   BY DEF TypeInv, Next, vars, Put, Get, Wait, NotifyOther, A!Next, 
+          A!vars, A!Put, A!Get, A!Wait, A!NotifyOther, A!RunningThreads
+<1>3. QED BY <1>1, <1>2, PTL, ITypeInv DEF Spec, A!Spec
 
 =============================================================================
