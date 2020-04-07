@@ -7,22 +7,49 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import tlc2.tool.TLAPlusExecutor;
+import tlc2.tool.TLAPlusExecutor.Mapping;
+import tlc2.value.impl.ModelValue;
+import tlc2.value.impl.SetEnumValue;
+
 public class App {
 
 	public static void main(String[] args) throws InterruptedException {
-        final Configuration conf = new Configuration(args);
-
-		final int k = conf.bufCapacity;
-		final BlockingQueue<String> queue = new BlockingQueue<>(k);
+		// The magic sauce.
+		final TLAPlusExecutor executor = new TLAPlusExecutor("BlockingQueueSplit", "BlockingQueueSplit"); // BQS.tla, BQS.cfg
+		
+		final IBlockingQueue<String> queue = new TLABlockingQueue<>(executor);
 
 		// The set of executing tasks.
 		final Collection<Callable<Void>> tasks = new HashSet<>();
-		for (int i = 0; i < conf.producers; i++) {
-			tasks.add(new Producer(Integer.toString(tasks.size()), queue));
-		}
-		for (int i = 0; i < conf.consumers; i++) {
-			tasks.add(new Consumer(queue));
-		}
+		
+		// Create a Java Consumer (Producer) for every model value for the TLA+ constant
+		// Consumers (Producers).
+		((SetEnumValue) executor.getConstant("Consumers").toSetEnum()).elements().forEach(e -> {
+			final ModelValue mv = (ModelValue) e;
+			// Map a condition - derived from the executor's lock - to each model value
+			// that represents a consumer process in TLA+.  The condition is how the
+			// TLAPlusExecutor controls the Java thread.
+			mv.setData(executor.getLock().newCondition());
+			// Map the current Java thread Consumer to its corresponding TLA+ action (TLC
+			// creates an action instance for Put and Get for each TLA+ process).
+			final Mapping map = executor.map("Get", "t", e);
+			
+			tasks.add(new Consumer(map, e.toString(), queue));
+		});
+		((SetEnumValue) executor.getConstant("Producers").toSetEnum()).elements().forEach(e -> {
+			final ModelValue mv = (ModelValue) e;
+			// Map a condition - derived from the executor's lock - to each model value
+			// that represents a consumer process in TLA+.  The condition is how the
+			// TLAPlusExecutor controls the Java thread.
+			mv.setData(executor.getLock().newCondition());
+			// Map queue.put below to TLA+ Put action. Map this thread to t param of TLA+
+			// Put action. Indicate that queue.put is going to pass the 'd' param of the
+			// TLA+ action.
+			final Mapping map = executor.map("Put", "t", e, "d");
+			
+			tasks.add(new Producer(map, e.toString(), queue));
+		});
 		
 		// Run all tasks concurrently.
 		final ExecutorService pool = Executors.newCachedThreadPool();
@@ -31,23 +58,5 @@ public class App {
 		// This will never be reached.
 		pool.shutdown();
 		pool.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
-	}
-
-	private static class Configuration {
-		public final int bufCapacity;
-		public final int producers;
-		public final int consumers;
-
-		public Configuration(String args[]) {
-			if (args.length == 3) {
-				this.bufCapacity = Integer.parseInt(args[0]);
-				this.producers = Integer.parseInt(args[1]);
-				this.consumers = Integer.parseInt(args[2]);
-			} else {
-				this.bufCapacity = 3;
-				this.producers = 4;
-				this.consumers = 3;
-			}
-		}
 	}
 }

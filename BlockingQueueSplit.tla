@@ -13,42 +13,50 @@ ASSUME Assumption ==
        
 -----------------------------------------------------------------------------
 
+\* Operators overridden by TLC Java module overrides.
+JSignalReturn(t, d) == TRUE
+JReturn(d) == TRUE
+JWait(t) == TRUE
+
+-----------------------------------------------------------------------------
+
 VARIABLES buffer, waitSetC, waitSetP
 vars == <<buffer, waitSetC, waitSetP>>
 
 RunningThreads == (Producers \cup Consumers) \ (waitSetC \cup waitSetP)
 
-NotifyOther(ws) == 
+NotifyOther(ws, d) ==
          \/ /\ ws = {}
             /\ UNCHANGED ws
+            /\ JReturn(d)
          \/ /\ ws # {}
-            /\ \E x \in ws: ws' = ws \ {x}
+            /\ \E t \in ws: ws' = ws \ {t} /\ JSignalReturn(t, d)
 
 (* @see java.lang.Object#wait *)
 Wait(ws, t) == /\ ws' = ws \cup {t}
-               /\ UNCHANGED <<buffer>>
+               /\ JWait(t)
            
 -----------------------------------------------------------------------------
 
 Put(t, d) ==
-/\ t \notin waitSetP
 /\ \/ /\ Len(buffer) < BufCapacity
+      /\ NotifyOther(waitSetC, "done")
       /\ buffer' = Append(buffer, d)
-      /\ NotifyOther(waitSetC)
       /\ UNCHANGED waitSetP
    \/ /\ Len(buffer) = BufCapacity
       /\ Wait(waitSetP, t)
-      /\ UNCHANGED waitSetC
+      /\ UNCHANGED <<waitSetC, buffer>>
+/\ t \notin waitSetP
       
 Get(t) ==
 /\ t \notin waitSetC
 /\ \/ /\ buffer # <<>>
       /\ buffer' = Tail(buffer)
-      /\ NotifyOther(waitSetP)
+      /\ NotifyOther(waitSetP, Head(buffer))
       /\ UNCHANGED waitSetC
    \/ /\ buffer = <<>>
       /\ Wait(waitSetC, t)
-      /\ UNCHANGED waitSetP
+      /\ UNCHANGED <<waitSetP, buffer>>
 
 -----------------------------------------------------------------------------
 

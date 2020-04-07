@@ -7,7 +7,9 @@ import org.kuppe.App2TLA.BufferDeqEvent;
 import org.kuppe.App2TLA.BufferEnqEvent;
 import org.kuppe.App2TLA.BufferWaitEvent;
 
-public final class BlockingQueue<E> {
+import tlc2.tool.TLAPlusExecutor.Mapping;
+
+public final class BlockingQueue<E> implements IBlockingQueue<E> {
 
 	private final E[] store;
 	
@@ -35,6 +37,7 @@ public final class BlockingQueue<E> {
 	 * 
 	 * @see {@link BlockingQueue#take()}.
 	 */
+	@Override
 	public void put(final E e) throws InterruptedException {
 		final ReentrantLock lock = this.lock;
 		lock.lock();
@@ -61,6 +64,7 @@ public final class BlockingQueue<E> {
 	 * 
 	 * @see {@link BlockingQueue#put(Object)}.
 	 */
+	@Override
 	public E take() throws InterruptedException {
         final ReentrantLock lock = this.lock;
         lock.lock();
@@ -115,5 +119,15 @@ public final class BlockingQueue<E> {
 	 */
 	private boolean isEmpty() {
 		return size == 0;
+	}
+
+	@Override
+	public void put(Mapping m, E e) throws Exception {
+		put(e);
+	}
+
+	@Override
+	public E take(Mapping m) throws Exception {
+		return take();
 	}
 }
