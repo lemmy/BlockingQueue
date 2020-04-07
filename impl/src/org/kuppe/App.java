@@ -12,16 +12,16 @@ public class App {
 	public static void main(String[] args) throws InterruptedException {
         final Configuration conf = new Configuration(args);
 
-		final int k = conf.bufCapacity;
-		final BlockingQueue<String> queue = new BlockingQueue<>(k);
+//		final IBlockingQueue<String> queue = new BlockingQueue<>(conf.bufCapacity);
+		final IBlockingQueue<String> queue = new TLABlockingQueue<>();
 
 		// The set of executing tasks.
 		final Collection<Callable<Void>> tasks = new HashSet<>();
 		for (int i = 0; i < conf.producers; i++) {
-			tasks.add(new Producer(Integer.toString(tasks.size()), queue));
+			tasks.add(new Producer("p" + Integer.toString(i + 1), queue));
 		}
 		for (int i = 0; i < conf.consumers; i++) {
-			tasks.add(new Consumer(queue));
+			tasks.add(new Consumer("c" + Integer.toString(i + 1), queue));
 		}
 		
 		// Run all tasks concurrently.
