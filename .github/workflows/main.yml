@@ -15,6 +15,8 @@ jobs:
       with:
         path: tlaps/
         key: tlaps1.4.5
+    - name: Extract CommunityModules for TLAPS
+      run: unzip CommunityModules.jar -d CommunityModules/
     - name: Get TLAPS
       if: steps.cache.outputs.cache-hit != 'true' # see actions/cache above
       run: wget https://tla.msr-inria.inria.fr/tlaps/dist/current/tlaps-1.4.5-x86_64-linux-gnu-inst.bin
@@ -24,7 +26,7 @@ jobs:
         chmod +x tlaps-1.4.5-x86_64-linux-gnu-inst.bin
         ./tlaps-1.4.5-x86_64-linux-gnu-inst.bin -d tlaps
     - name: Run TLAPS
-      run: tlaps/bin/tlapm --cleanfp -I tlaps/ BlockingQueue.tla BlockingQueueSplit.tla
+      run: tlaps/bin/tlapm --cleanfp -I tlaps/ -I CommunityModules/ BlockingQueue.tla BlockingQueueSplit.tla BlockingQueueFair.tla
     - name: Get (nightly) TLC
       run: wget https://nightly.tlapl.us/dist/tla2tools.jar
     - name: Run TLC
