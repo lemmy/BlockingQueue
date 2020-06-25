@@ -13,6 +13,10 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v31 (Refinement Fair): Refine BlockingQueue with BlockingQueueFair spec.
+
+```BlockingQueueFair``` refines ```BlockingQueueSplit``` by notifying the longest-waiting producer or consumer thread instead of any thread in ```waitC``` or ```waitP```. For that, it uses (ordered) sequences in place of the (unordered) sets.  The refinement mapping is straight forward: ```BlockingQueueSplit!waitC``` and ```waitP``` are refined by the sequences ```waitSeqC``` and ```waitSeqP``` respectively.  TLC checked the refinement mapping for the finite model with the configuration p4c3b3.
+
 ### v30 (Starvation): Liveness-check multiple configurations.
 
 The trick of adding auxiliary variables to check sets of constants values as in [v06](#v06-continue-convert-constants-into-variables) does not work if we verify liveness properties (`Producer` and `Consumer` in the fairness constraint become [state-level](http://lamport.azurewebsites.net/tla/newmodule.html)). Instead, we come up with another trick that lets us check sets of constant values: By writing a new spec `BlockingQueueMC.tla` extending `BlockingQueue` that redefines the three constants `P`, `C`, and `B` with expressions that read (concrete) values from the process' environment variables (which is what the `IOEnv` operator from the [`IOUtils`](https://github.com/tlaplus/CommunityModules/blob/master/modules/IOUtils.tla) CommunityModules is for).
