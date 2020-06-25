@@ -13,6 +13,74 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v28 (Starvation): Weak fairness defined for Put.
+
+Defining ```Next``` to be (weakly) [fair](https://pron.github.io/posts/tlaplus_part3#machine-closure-and-fairness) makes only sure that a Next-step is (eventually) taken.  However, ```Next``` is a disjunct of the ```Put``` and ```Get``` sub-actions and fairness does not distribute.  Since, we want all producers to eventually take steps, we specify (weak) fairness at the level of the ```Put``` sub-actions.  Unfortunately, producers can still starve:
+
+```tla
+Checking temporal properties for the complete state space with 1600 total distinct states at (2020-01-18 15:28:06)
+Error: Temporal properties were violated.
+
+Error: The following behavior constitutes a counter-example:
+
+State 1: <Initial predicate>
+/\ buffer = <<>>
+/\ waitSet = {}
+
+State 2: <Next line 54, col 9 to line 57, col 45 of module BlockingQueue>
+/\ buffer = <<p2>>
+/\ waitSet = {}
+
+State 3: <Next line 54, col 9 to line 57, col 45 of module BlockingQueue>
+/\ buffer = <<p2, p3>>
+/\ waitSet = {}
+
+State 4: <Next line 54, col 9 to line 57, col 45 of module BlockingQueue>
+/\ buffer = <<p2, p3, p2>>
+/\ waitSet = {}
+
+State 5: <Next line 54, col 9 to line 57, col 45 of module BlockingQueue>
+/\ buffer = <<p2, p3, p2>>
+/\ waitSet = {p1}
+
+State 6: <Next line 54, col 9 to line 57, col 45 of module BlockingQueue>
+/\ buffer = <<p2, p3, p2>>
+/\ waitSet = {p1, p4}
+
+State 7: <Next line 54, col 9 to line 57, col 45 of module BlockingQueue>
+/\ buffer = <<p2, p3, p2>>
+/\ waitSet = {p1, p2, p4}
+
+State 8: <Next line 54, col 9 to line 57, col 45 of module BlockingQueue>
+/\ buffer = <<p2, p3, p2>>
+/\ waitSet = {p1, p2, p3, p4}
+
+State 9: <Next line 54, col 9 to line 57, col 45 of module BlockingQueue>
+/\ buffer = <<p3, p2>>
+/\ waitSet = {p1, p2, p3}
+
+State 10: <Next line 54, col 9 to line 57, col 45 of module BlockingQueue>
+/\ buffer = <<p2>>
+/\ waitSet = {p1, p2}
+
+State 11: <Next line 54, col 9 to line 57, col 45 of module BlockingQueue>
+/\ buffer = <<>>
+/\ waitSet = {p1}
+
+State 12: <Next line 54, col 9 to line 57, col 45 of module BlockingQueue>
+/\ buffer = <<p2>>
+/\ waitSet = {p1}
+
+State 13: <Next line 54, col 9 to line 57, col 45 of module BlockingQueue>
+/\ buffer = <<p2, p3>>
+/\ waitSet = {p1}
+
+Back to state 5: <Next line 54, col 9 to line 57, col 45 of module BlockingQueue>
+
+Finished checking temporal properties in 00s at 2020-01-18 15:28:06
+12313 states generated, 1600 distinct states found, 0 states left on queue.
+```
+
 ### v27 (Starvation): Starvation of individual producers.
 
 Individual Producer or Consumer threads can starve because we haven't specified fair (except for weak fairness of Next to avoid the trivial counter-example of stuttering after Init).
