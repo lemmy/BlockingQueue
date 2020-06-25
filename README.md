@@ -13,6 +13,12 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v33 (Refinement Fair): Prove BlockingQueueFair implements BlockingQueueSplit.
+
+A proof showing that ```BlockingQueueSplit``` implements ```BlockingQueueSplit```.   Two lemmas show that it is sometimes necessary to prove simpler facts first to prove the main theorem.
+
+Compared to the previous proofs, this one is far more involved and more realistically reflects the efforts require to write proofs; the refinement proof took approximately three weeks.  Three weeks is quite an investment considering that the correctness of the refinement seems straight forward in the first place.  However, three weeks also includes the work to detect and help with a fix for a [regression in TLAPS 1.4.4](https://github.com/tlaplus/tlapm/releases/tag/v1.4.5), identifying [two](https://github.com/tlaplus/tlaplus/issues/434) Toolbox [issues](https://github.com/tlaplus/tlaplus/issues/433), and familiarizing myself with the TLAPS [build](https://github.com/tlaplus/tlapm/blob/master/tools/installer/tlaps-release.sh.in) and [development](https://www.youtube.com/watch?v=Eu46FmhpR_0&feature=youtu.be) process.
+
 ### v32 (Refinement Fair): Prove TypeInv is an inductive invariant of BlockingQueueFair.
 
 As a first step of proving that ```BlockingQueueFair``` refines ```BlockingQueueSplit```, we once again prove inductiveness of ```TypeInv```.
