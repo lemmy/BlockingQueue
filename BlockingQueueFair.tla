@@ -85,4 +85,13 @@ BQSStarvation == BQS!A!Starvation
 THEOREM FairSpec => BQSStarvation
 -----------------------------------------------------------------------------
 
+TypeInv == /\ buffer \in Seq(Producers)
+           /\ Len(buffer) \in 0..BufCapacity
+           \* Producers
+           /\ waitSeqP \in Seq(Producers)
+           /\ IsInjective(waitSeqP) \* no duplicates (thread is either asleep or not)!
+           \* Consumers
+           /\ waitSeqC \in Seq(Consumers)
+           /\ IsInjective(waitSeqC) \* no duplicates (thread is either asleep or not)!
+
 =============================================================================
