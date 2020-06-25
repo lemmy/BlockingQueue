@@ -115,7 +115,8 @@ MCIInv == TypeInv!1 /\ IInv
 
 PutEnabled == \A p \in Producers : ENABLED Put(p, p)
 
-FairSpec == Spec /\ WF_vars(Next)
+FairSpec == Spec /\ WF_vars(Next) 
+                 /\ \A p \in Producers : WF_vars(Put(p, p)) 
 
 (* All producers will continuously be serviced. For this to be violated,    *)
 (* ASSUME Cardinality(Producers) > 1 has to hold (a single producer cannot  *)
