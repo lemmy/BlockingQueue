@@ -124,4 +124,18 @@ FairSpec == Spec /\ WF_vars(Next)
 (* starve itself).                                                          *)
 Starvation == \A p \in Producers: []<>(<<Put(p, p)>>_vars)
 
+-----------------------------------------------------------------------------
+
+PC == INSTANCE ProducerConsumer WITH buffer <- Len(buffer)
+
+THEOREM Implements == Spec => PC!Spec
+<1> USE Assumption
+<1>1. Init => PC!Init 
+   BY Isa DEF Init, PC!Init
+<1>2. TypeInv /\ [Next]_vars => [PC!Next]_PC!vars
+   BY SMT DEF Next, vars, Put, Get, Wait, NotifyOther, PC!Next, 
+          PC!vars, PC!Put, PC!Get, PC!Wait, PC!NotifyOther
+<1>3. QED BY <1>1, <1>2, PTL, TypeCorrect DEF Spec, PC!Spec
+
+
 =============================================================================
