@@ -57,7 +57,7 @@ Init == /\ buffer = <<>>
 Next == \/ /\ thread \notin waitSet                        \* Pred_A(i)
            /\ thread' \in (Producers \cup Consumers)       \* Setp
            /\ \/ /\ thread \in Producers                   \* A
-                 /\ Put(thread, RandomElement(Data)) \* Add some data to buffer
+                 /\ \E d \in Data: Put(thread, d) \* Add some data to buffer
               \/ /\ thread \in Consumers
                  /\ Get(thread)
         \/ /\ thread \in waitSet
@@ -71,6 +71,8 @@ TypeInv == /\ buffer \in Seq(Producers)
            /\ waitSet \subseteq (Producers \cup Consumers)
 
 (* No Deadlock *)
-Invariant == waitSet # (Producers \cup Consumers)
+Invariant == buffer = <<"E","N","D">> => waitSet # (Producers \cup Consumers)
 
 =============================================================================
+
+

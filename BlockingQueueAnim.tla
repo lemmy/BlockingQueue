@@ -1,5 +1,5 @@
 ------------------------- MODULE BlockingQueueAnim -------------------------
-EXTENDS SVG, SequencesExt, Toolbox, BlockingQueue
+EXTENDS SVG, SequencesExt, BlockingQueue, TLCExt
 
 ---------------------------------------------------------------------------
 (*
@@ -25,12 +25,12 @@ Diff(S1, S2) ==
 -------------------------------------------------------------------------
 
 \* Just short-hands.
-curBuf == _TETrace[_TEPosition].buffer
+curBuf == buffer
 
-Waiting == _TETrace[_TEPosition].waitSet
+Waiting == waitSet
 Running == (Producers \cup Consumers) \ Waiting 
 
-Scheduled == _TETrace[_TEPosition].thread
+Scheduled == thread
 
 \* The element of buffer at index i or Null if i is out-of-bounds.
 ElemAt(i) == IF i > Len(curBuf)
@@ -40,13 +40,9 @@ ElemAt(i) == IF i > Len(curBuf)
 \* Problem: The following is clumsy, primarily because it has to check if 
 \* _TETrace is out-of-bounds
 
-nxtBuf == IF _TEPosition < Len(_TETrace)
-          THEN _TETrace[_TEPosition + 1].buffer
-          ELSE << >> \* No next buffer after last state of the trace.
+nxtBuf == << >> \* No next buffer after last state of the trace.
 
-prvBuf == IF _TEPosition > 1
-          THEN _TETrace[_TEPosition - 1].buffer
-          ELSE << >> \* No previous buffer before first state of the trace
+prvBuf == << >> \* No previous buffer before first state of the trace
 
 \* True if t is the executing thread in the next state.
 IsScheduledThread(t) == t = Scheduled
@@ -143,6 +139,21 @@ GCons ==
 
 \* Everything lumped together
 
+
 Animation == SVGElemToString(Group(<<Labels, GProd, GBuffer, GCons>>, <<>>))
 
+Alias == [ anim |-> 
+"<svg viewBox='-80 0 450 300'>" \o Animation \o "</svg>"]
 =============================================================================
+
+## Check the spec with `Alias` configured as `ALIAS` in BlockingQueue.cfg.
+## Remove the ugly qoutes are the chars that represent the elements in the
+## buffer with sed.
+/opt/toolbox/tla2tools.jar -config BlockingQueue.cfg BlockingQueueAnim | sed 's/\\"//g' | awk 'match($0,/<svg.*<\/svg>/) { n += 1; print substr($0,RSTART,RLENGTH) > n ".svg" }'
+
+## The svgs have transparent background.  Convert them into pngs with a
+## suitable resolution for the video while adding a white background.
+for i in *.svg; do convert -density 1000 -resize 1920x1080 $i $i.png; done
+
+## Render the sequence of pngs into an mp4 with two frames per second. 
+ffmpeg -r 2 -y -i %d.svg.png BlockingQueueEnd.mp4
