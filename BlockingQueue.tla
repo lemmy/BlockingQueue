@@ -1,19 +1,34 @@
 --------------------------- MODULE BlockingQueue ---------------------------
 EXTENDS Naturals, Sequences, FiniteSets
 
-CONSTANTS Producers,   (* the (nonempty) set of producers                       *)
-          Consumers,   (* the (nonempty) set of consumers                       *)
-          BufCapacity  (* the maximum number of messages in the bounded buffer  *)
+CONSTANTS 
+    \* @type: Set(Str);
+    Producers,   (* the (nonempty) set of producers                       *)
+    \* @type: Set(Str);
+    Consumers,   (* the (nonempty) set of consumers                       *)
+    \* @type: Int;
+    BufCapacity  (* the maximum number of messages in the bounded buffer  *)
 
 ASSUME Assumption ==
        /\ Producers # {}                      (* at least one producer *)
        /\ Consumers # {}                      (* at least one consumer *)
        /\ Producers \intersect Consumers = {} (* no thread is both consumer and producer *)
        /\ BufCapacity \in (Nat \ {0})         (* buffer capacity is at least 1 *)
-       
+
+\* Apalache's constant initializer feature (--cinit=ConstInit on the command line)
+ConstInit ==
+  /\ Producers = {"p1","p2","p3","p4"} \* \in ((SUBSET {"p1","p2","p3","p4"}) \ {{}})
+  /\ Consumers = {"c1","c2","c3"} \* \in ((SUBSET {"c1","c2","c3"}) \ {{}})
+  /\ BufCapacity = 3  \* \in 1..3
+
 -----------------------------------------------------------------------------
 
-VARIABLES buffer, waitSet
+VARIABLES 
+    \* @type: Seq(Str);
+    buffer,
+    \* @type: Set(Str);
+    waitSet
+
 vars == <<buffer, waitSet>>
 
 RunningThreads == (Producers \cup Consumers) \ waitSet
@@ -93,8 +108,8 @@ LEMMA TypeCorrect == Spec => []TypeInv
 
 \* The naive thing to do is to check if the conjunct of TypeInv /\ Invariant
 \* is inductive.
-IInv == /\ TypeInv!2
-        /\ TypeInv!3
+IInv == /\ Len(buffer) \in 0..BufCapacity  \* https://github.com/informalsystems/apalache/issues/876
+        /\ waitSet \in SUBSET (Producers \cup Consumers)
         /\ Invariant
         \* When the buffer is empty, a consumer will be added to the waitSet.
         \* However, this does not crate a deadlock, because at least one producer
@@ -110,7 +125,7 @@ THEOREM DeadlockFreedom == Spec => []Invariant
 <1>3. IInv => Invariant  BY DEF IInv
 <1>4. QED BY <1>1,<1>2,<1>3,PTL
 
-MCIInv == TypeInv!1 /\ IInv
+MCIInv == buffer \in Seq(Producers) /\ IInv
 
 -----------------------------------------------------------------------------
 
