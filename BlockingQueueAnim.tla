@@ -69,27 +69,14 @@ ConsBuf(t) == DiffBuf(t, prvBuf, curBuf)
  <svg> elements could help.
 *)
 
-Arial == [font |-> "Arial"]
+Arial == [font |-> "Arial", font_weight |-> "bolder"]
 
 ---------------------------------------------------------------------------
 \* Labels
 
 Pos == [ x |-> 5, y |-> 25 ]
 
-GWaitSet == Group(<<Text(Pos.x, Pos.y, "Wait:", Arial), 
-                    Text(Pos.x + 55, Pos.y, ToString(Waiting), Arial)>>,
-                  <<>>)
-
-GRunningSet == Group(<<Text(Pos.x, Pos.y, "Run:", Arial), 
-                       Text(Pos.x + 55, Pos.y, ToString(Running), Arial)>>,
-                     ("transform" :> "translate(0 25)")) \* Move GRunningSet 50pts south of GWaitSet
-
-GScheduled == Group(<<Text(Pos.x, Pos.y, "Sched:", Arial), 
-                      Text(Pos.x + 60, Pos.y, ToString(Scheduled), Arial)>>,
-                     ("transform" :> "translate(0 50)"))
-
-Labels == Group(<<GWaitSet, GRunningSet, GScheduled>>, ("transform" :> "translate(20 0)"))
-    
+   
 \* Buffer
 
 BufferCellColor(i) == 
@@ -100,12 +87,11 @@ BufferCellColor(i) ==
 BPos == [w |-> 55, h |-> 55]
         
 Buffer[ i \in 1..BufCapacity ] ==         
-    LET label == Text(i * (BPos.w + Pos.x) + 25, Pos.y, ToString(i), Arial)
-        value == Text(i * (BPos.w + Pos.x) + 25, Pos.y + 40, ToStringNull(ElemAt(i)), Arial)
+    LET value == Text(i * (BPos.w + Pos.x) + 20, Pos.y + 45, ToStringNull(ElemAt(i)), Arial @@ [font_size |-> "x-large"])
         rect  == Rect(i * (BPos.w + Pos.x), Pos.y + 10, BPos.w, BPos.h, [fill |-> BufferCellColor(i)])
-    IN Group(<<label, rect, value>>, <<>>)
+    IN Group(<<rect, value>>, <<>>)
 
-GBuffer == Group(Buffer, ("transform" :> "translate(0 125)"))
+GBuffer == Group(Buffer, ("transform" :> "translate(-35 125)"))
 ---------------------------------------------------------------------------
 
 CircleColor(t) == 
@@ -117,30 +103,30 @@ CircleColor(t) ==
 
 \* Producer
 
-PPos == [ r |-> 20 ]
+PPos == [ r |-> 30 ]
 
 GProd == 
     LET seq == SetToSeq(Producers)
         F[ i \in DOMAIN seq ] == Group(<<Circle(Pos.x, i * Pos.y, PPos.r, [fill |-> CircleColor(seq[i])]),
-                                         Text(Pos.x - 10,   i * Pos.y + 5, ToString(seq[i]), Arial),
+                                         Text(Pos.x - 23,   i * Pos.y + 5, ToString(seq[i]), Arial),
                                          Text(Pos.x + 35,   i * Pos.y + 5, ToStringNull(ProdBuf(seq[i])), Arial)
                                        >>, ("transform" :> "translate(0 "\o ToString(i * 25) \o ")"))
-    IN Group(F, ("transform" :> "translate(-25 70)"))
+    IN Group(F, ("transform" :> "translate(-25 90)"))
 
 \* Consumer
 
 GCons == 
     LET seq == SetToSeq(Consumers)
         F[ i \in DOMAIN seq ] == Group(<<Circle(Pos.x, i * Pos.y, PPos.r, [fill |-> CircleColor(seq[i])]),
-                                         Text(Pos.x - 10,   i * Pos.y + 5, ToString(seq[i]), Arial),
+                                         Text(Pos.x - 25,   i * Pos.y + 5, ToString(seq[i]), Arial),
                                          Text(Pos.x - 45,   i * Pos.y + 5, ToStringNull(ConsBuf(seq[i])), Arial)
                                        >>, ("transform" :> "translate(0 "\o ToString(i * 25) \o ")"))
-    IN Group(F, ("transform" :> "translate(285 90)"))
+    IN Group(F, ("transform" :> "translate(300 90)"))
 
 \* Everything lumped together
 
 
-Animation == SVGElemToString(Group(<<Labels, GProd, GBuffer, GCons>>, <<>>))
+Animation == SVGElemToString(Group(<<GProd, GBuffer, GCons>>, <<>>))
 
 Alias == [ anim |-> 
 "<svg viewBox='-80 0 450 300'>" \o Animation \o "</svg>"]

@@ -46,7 +46,7 @@ Get(t) ==
 -----------------------------------------------------------------------------
 
 (* Initially, the buffer is empty and no thread is waiting. *)
-Init == /\ buffer = <<>>
+Init == /\ buffer = <<"T","L","A","+">>
         /\ waitSet = {}
         /\ thread \in (Producers \cup Consumers)
 
@@ -71,7 +71,7 @@ TypeInv == /\ buffer \in Seq(Producers)
            /\ waitSet \subseteq (Producers \cup Consumers)
 
 (* No Deadlock *)
-Invariant == buffer = <<"E","N","D">> => waitSet # (Producers \cup Consumers)
+Invariant == buffer # <<"C","O","N","F">> \* => waitSet # (Producers \cup Consumers)
 
 =============================================================================
 
