@@ -13,6 +13,10 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v35 (Termination): Check refinement of BlockingQueue by BlockingQueuePoisonPill.
+
+The poison-pill mechanism is purely an implementation detail and should not be observable at the level of the abstract ```BlockingQueue``` spec.  We make this precise by instantiating ```BlockingQueue``` with a refinement mapping that hides ```Poison```: every poison element in ```buffer``` is mapped to an arbitrary producer value.  The resulting ```THEOREM Spec => BQSpec``` is added as a temporal property in the model so that TLC verifies the refinement for the configured model alongside ```GlobalTermination```.
+
 ### v34 (Termination): Terminate Consumers when Producers are done by sending a poison pill in a termination stage.
 
 ```BlockingQueuePoisonPill``` extends the spec with explicit termination: producers and consumers are now tracked in variables ```prod``` and ```cons``` so that they can drop out, and a dedicated ```Cleanup``` action acts as a "janitor" that puts a special ```Poison``` element into the buffer once all producers have terminated.  Consumers that read a poison pill terminate themselves.  The advantage of piggybacking on the existing queue is that no extra synchronization primitive is needed; the temporal property ```GlobalTermination == (prod = {}) ~> [](cons = {})``` captures that producer shutdown eventually drains all consumers.
