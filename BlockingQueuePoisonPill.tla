@@ -10,9 +10,26 @@ ASSUME Assumption ==
        /\ Consumers # {}                      (* at least one consumer *)
        /\ Producers \intersect Consumers = {} (* no thread is both consumer and producer *)
        /\ BufCapacity \in (Nat \ {0})         (* buffer capacity is at least 1 *)
+-----------------------------------------------------------------------------
+\* These three variables are pratically constants but have to be VARIABLES because TLC
+\* doesn't support verification of sets of CONSTANT values.
+\* (see https://github.com/tlaplus/tlaplus/issues/272)
+VARIABLES B, P, C
+consts == <<B, P, C>>
+
+(*ASSUME*) Constant ==
+    /\ B \in 1..BufCapacity
+    /\ P \in SUBSET Producers
+    /\ C \in SUBSET Consumers
+    /\ [][B = B' /\ P = P' /\ C = C']_consts
+
+ConstInit ==
+    /\ B \in 1..BufCapacity
+    /\ P \in (SUBSET Producers \ {{}})
+    /\ C \in (SUBSET Consumers \ {{}})
 
 VARIABLES buffer, waitSet, prod, cons
-vars == <<buffer, waitSet, prod, cons>>
+vars == <<B, P, C, buffer, waitSet, prod, cons>>
 
 -----------------------------------------------------------------------------
 
@@ -32,10 +49,10 @@ Poison == CHOOSE v : TRUE
 Put(t, d) ==
     /\ UNCHANGED <<prod, cons>>
     /\ t \notin waitSet
-    /\ \/ /\ Len(buffer) < BufCapacity
+    /\ \/ /\ Len(buffer) < B
           /\ buffer' = Append(buffer, d)
           /\ NotifyOther(t)
-       \/ /\ Len(buffer) = BufCapacity
+       \/ /\ Len(buffer) = B
           /\ Wait(t)
 
 Get(t) ==
@@ -81,18 +98,20 @@ Cleanup ==
     \* Make one of the producers the janitor that cleans up (we always
     \* choose the same janitor). An implementation may simply create a fresh
     \* process/thread (here it would be a nuisance because of TypeInv...).
-    /\ Put(CHOOSE p \in Producers: TRUE, Poison)
+    /\ Put(CHOOSE p \in P: TRUE, Poison)
 
 -----------------------------------------------------------------------------
 
 (* Initially, the buffer is empty and no thread is waiting. *)
-Init == /\ prod = Producers
-        /\ cons = Consumers
+Init == /\ ConstInit
+        /\ prod = P
+        /\ cons = C
         /\ buffer = <<>>
         /\ waitSet = {}
         
 (* Then, pick a thread out of all running threads and have it do its thing. *)
 Next == 
+    /\ UNCHANGED consts
     /\ \/ \E p \in prod: Put(p, p)
        \/ \E p \in prod: Terminate(p)
        \/ \E c \in cons: Get(c)
@@ -102,11 +121,11 @@ Next ==
 
 (* TLA+ is untyped, thus lets verify the range of some values in each state. *)
 TypeInv == 
-    /\ buffer \in Seq(Producers \cup {Poison})
+    /\ buffer \in Seq(P \cup {Poison})
     /\ Len(buffer) \in 0..BufCapacity
-    /\ waitSet \in SUBSET (Consumers \cup Producers)
-    /\ prod \in SUBSET Producers
-    /\ cons \in SUBSET Consumers
+    /\ waitSet \in SUBSET (C \cup P)
+    /\ prod \in SUBSET P
+    /\ cons \in SUBSET C
 
 (* No Deadlock *)
 NoDeadlock == waitSet # (Producers \cup Consumers)
