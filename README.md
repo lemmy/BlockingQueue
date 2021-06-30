@@ -13,6 +13,8 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v34 (Termination): Terminate Consumers when Producers are done by sending a poison pill in a termination stage.
+
 ### v33 (Refinement Fair): Prove BlockingQueueFair implements BlockingQueueSplit.
 
 A proof showing that ```BlockingQueueSplit``` implements ```BlockingQueueSplit```.   Two lemmas show that it is sometimes necessary to prove simpler facts first to prove the main theorem.
