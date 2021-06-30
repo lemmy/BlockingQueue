@@ -13,6 +13,8 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v36 (Termination): Check BlockingQueuePoisonPill for all subsets of the constants by mimicking Apalache's ConstInit feature.
+
 ### v35 (Termination): Check refinement of BlockingQueue by BlockingQueuePoisonPill.
 
 ### v34 (Termination): Terminate Consumers when Producers are done by sending a poison pill in a termination stage.
