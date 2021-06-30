@@ -13,6 +13,10 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v34 (Termination): Terminate Consumers when Producers are done by sending a poison pill in a termination stage.
+
+```BlockingQueuePoisonPill``` extends the spec with explicit termination: producers and consumers are now tracked in variables ```prod``` and ```cons``` so that they can drop out, and a dedicated ```Cleanup``` action acts as a "janitor" that puts a special ```Poison``` element into the buffer once all producers have terminated.  Consumers that read a poison pill terminate themselves.  The advantage of piggybacking on the existing queue is that no extra synchronization primitive is needed; the temporal property ```GlobalTermination == (prod = {}) ~> [](cons = {})``` captures that producer shutdown eventually drains all consumers.
+
 ### v33 (Refinement Fair): Prove BlockingQueueFair implements BlockingQueueSplit.
 
 A proof showing that ```BlockingQueueSplit``` implements ```BlockingQueueSplit```.   Two lemmas show that it is sometimes necessary to prove simpler facts first to prove the main theorem.
