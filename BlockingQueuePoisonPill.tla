@@ -122,4 +122,22 @@ GlobalTermination ==
 Spec ==
     Init /\ [][Next]_vars /\ WF_vars(Next) 
 
+-----------------------------------------------------------------------------
+\* This spec still implementes the high-level BlockingQueue spec.
+
+BQ == INSTANCE BlockingQueue
+                \* Replace Poison with some Producer. The high-level
+                \* BlockingQueue spec is a peculiar about the elements
+                \* in its buffer.  If this wouldn't be a tutotial but
+                \* a real-world spec, the high-level spec would be
+                \* corrected to be oblivious to the elements in buffer.
+                WITH buffer <-
+                    [ i \in DOMAIN buffer |-> IF buffer[i] = Poison
+                                              THEN CHOOSE p \in Producers: TRUE
+                                              ELSE buffer[i] ]
+
+BQSpec == BQ!Spec
+
+THEOREM Spec => BQSpec
+
 =============================================================================
