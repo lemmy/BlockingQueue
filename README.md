@@ -13,6 +13,8 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v33 (Termination): Check refinement of BlockingQueue by BlockingQueuePoisonPill.
+
 ### v32 (Termination): Terminate Consumers when Producers are done by sending a poison pill in a termination stage.
 
 ### v31 (Refinement Fair): Prove BlockingQueueFair implements BlockingQueueSplit.
