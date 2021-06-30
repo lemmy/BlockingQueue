@@ -13,6 +13,10 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v36 (Termination): Check BlockingQueuePoisonPill for all subsets of the constants by mimicking Apalache's ConstInit feature.
+
+So far each TLC run has fixed a single value for ```BufCapacity```, ```Producers```, and ```Consumers```.  To exercise *all* non-empty subsets and capacities in a single run we mimic Apalache's [```ConstInit```](https://apalache-mc.org/docs/apalache/running.html#23-using-a-constant-initializer) feature: ```B```, ```P```, and ```C``` are declared as variables that don't change after the initial states, picked non-deterministically in ```Init``` from ```1..BufCapacity```, ```SUBSET Producers \ {{}}```, and ```SUBSET Consumers \ {{}}```, and required to be unchanged by ```Next``` (see [tlaplus#272](https://github.com/tlaplus/tlaplus/issues/272) for the underlying TLC limitation).  The refinement to ```BlockingQueue``` no longer holds under this rewrite (the refined spec quantifies over different constants in different behaviors), so ```PROPERTIES BQSpec``` is commented out for this configuration.
+
 ### v35 (Termination): Check refinement of BlockingQueue by BlockingQueuePoisonPill.
 
 The poison-pill mechanism is purely an implementation detail and should not be observable at the level of the abstract ```BlockingQueue``` spec.  We make this precise by instantiating ```BlockingQueue``` with a refinement mapping that hides ```Poison```: every poison element in ```buffer``` is mapped to an arbitrary producer value.  The resulting ```THEOREM Spec => BQSpec``` is added as a temporal property in the model so that TLC verifies the refinement for the configured model alongside ```GlobalTermination```.
