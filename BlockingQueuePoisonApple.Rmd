@@ -1,0 +1,27 @@
+---
+title: "BlockingQueuePoisonApple"
+author: "Markus A Kuppe"
+date: "`r Sys.Date()`"
+output: 
+  github_document:
+    toc: true
+    toc_depth: 2
+    html_preview: false
+---
+
+#### This file is generated on a host with all libraries installed via:
+```shell
+Rscript -e "rmarkdown::render('BlockingQueuePoisonApple.Rmd')"
+```
+## Results
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Some heading
+
+```{r dataN7, echo=FALSE, warning=FALSE, message=FALSE}
+```
+
+
