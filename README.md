@@ -13,6 +13,12 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v37 (Termination): Gradually terminate Consumers when Producers shutdown by sending Poison Apples.
+
+Poison Pill variant where each producer sends `N` slices of a Poison Apple to `N` consumers. A consumer dies (terminates) when it has eaten `M` apple slices, where `M` is the number of producers.
+    
+The advantage over the Poison Pill approach is that no extra synchronization primitive is required to detect global producer termination that triggers sending the poison pills. Also, consumers down-scale gradually following the producer termination.
+
 ### v36 (Termination): Check BlockingQueuePoisonPill for all subsets of the constants by mimicking Apalache's ConstInit feature.
 
 ### v35 (Termination): Check refinement of BlockingQueue by BlockingQueuePoisonPill.
