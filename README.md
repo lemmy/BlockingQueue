@@ -13,6 +13,12 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v37 (Termination): Gradually terminate Consumers when Producers shutdown by sending Poison Apples.
+
+Poison Pill variant where each producer sends `N` slices of a Poison Apple to `N` consumers. A consumer dies (terminates) when it has eaten `M` apple slices, where `M` is the number of producers.
+    
+The advantage over the Poison Pill approach is that no extra synchronization primitive is required to detect global producer termination that triggers sending the poison pills. Also, consumers down-scale gradually following the producer termination.
+
 ### v36 (Termination): Check BlockingQueuePoisonPill for all subsets of the constants by mimicking Apalache's ConstInit feature.
 
 So far each TLC run has fixed a single value for ```BufCapacity```, ```Producers```, and ```Consumers```.  To exercise *all* non-empty subsets and capacities in a single run we mimic Apalache's [```ConstInit```](https://apalache-mc.org/docs/apalache/running.html#23-using-a-constant-initializer) feature: ```B```, ```P```, and ```C``` are declared as variables that don't change after the initial states, picked non-deterministically in ```Init``` from ```1..BufCapacity```, ```SUBSET Producers \ {{}}```, and ```SUBSET Consumers \ {{}}```, and required to be unchanged by ```Next``` (see [tlaplus#272](https://github.com/tlaplus/tlaplus/issues/272) for the underlying TLC limitation).  The refinement to ```BlockingQueue``` no longer holds under this rewrite (the refined spec quantifies over different constants in different behaviors), so ```PROPERTIES BQSpec``` is commented out for this configuration.
