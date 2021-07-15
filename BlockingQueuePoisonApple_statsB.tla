@@ -39,27 +39,14 @@ ToFile ==
 
 \* Write column headers at TLC startup.
 ASSUME 
-    IOExec(
-        <<"bash", "-c", 
-            "echo \"trace#level#P#C#B#over#under\" > " \o ToFile>>
-        ).exitValue = 0 \* Fail fast if ToFile was not created.
+    CSVWrite("trace#level#P#C#B#over#under", <<>>, ToFile)
 
 BehaviorsTerminate ==
     \* Verify that the expected number of traces have been generated. Fewer
     \* traces indicate that some of the traces were longer than the value of
     \* TLC's -depth parameter. Semantically, this means those traces didn't
     \* terminate.
-    \* TODO Simplify to something along the lines of Len(CSVRead(ToFile, ",")).
-    \* TODO The rigmarole below is the very reason why I dislike excessive scripting,
-    \* TODO especially when doing statistics where it is notoriously difficult to
-    \* TODO spot scripting bugs in the first place.
-    LET \* Piped to xargs to strip off leading and trailing whitespace on macOS.
-        proc == IOExec(<<"bash", "-c", "wc -l < " \o ToFile \o " | xargs">>)
-        \* Strip the trailing newline.
-        val == SubSeq(proc.stdout, 1, Len(proc.stdout) - 1)
-        \* + 1 to account for the csv header.
-        expected == 1 + TLCGet("config").traces
-    IN val = ToString(expected)
+    TLCGet("config").traces = CSVRecords(ToFile) - 1 \* Don't count the column header.
 
 PlotStatistics ==
     \* Have TLC execute the R script on the generated CSV file.
