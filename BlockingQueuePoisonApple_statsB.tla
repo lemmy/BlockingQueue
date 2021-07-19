@@ -1,5 +1,5 @@
 ---- MODULE BlockingQueuePoisonApple_statsB ----
-EXTENDS TLC, TLCExt, IOUtils, CSV, FiniteSets, Sequences, Integers
+EXTENDS TLC, TLCExt, IOUtils, Json, CSV, FiniteSets, Sequences, Integers
 
 Max(a,b) ==
     IF a > b THEN a ELSE b
@@ -35,25 +35,30 @@ ASSUME TLCGet("config").mode = "generate"
 ASSUME TLCGet("config").depth = -1
 
 ToFile ==
-    "BQPA_B_" \o ToString(JavaTime) \o ".csv"
+    "BQPA_B_" \o ToString(JavaTime)
+
+ASSUME JsonSerialize(ToFile \o ".json", <<TLCGet("config")>>)
+
+CSVFile ==
+    ToFile \o ".csv"
 
 \* Write column headers at TLC startup.
 ASSUME 
-    CSVWrite("trace,level,P,C,B,over,under", <<>>, ToFile)
+    CSVWrite("trace,level,P,C,B,over,under", <<>>, CSVFile)
 
 BehaviorsTerminate ==
     \* Verify that the expected number of traces have been generated. Fewer
     \* traces indicate that some of the traces were longer than the value of
     \* TLC's -depth parameter. Semantically, this means those traces didn't
     \* terminate.
-    TLCGet("config").traces = CSVRecords(ToFile) - 1 \* Don't count the column header.
+    TLCGet("config").traces = CSVRecords(CSVFile) - 1 \* Don't count the column header.
 
 PlotStatistics ==
     \* Have TLC execute the R script on the generated CSV file.
     LET proc == IOExec(<<
             \* Find R on the current system (known to work on macOS and Linux).
             "/usr/bin/env", "Rscript",
-            "BlockingQueuePoisonApple_statsB.R", ToFile>>)
+            "BlockingQueuePoisonApple_statsB.R", CSVFile>>)
     IN \/ proc.exitValue = 0
        \/ PrintT(proc) \* Print stdout and stderr if R script fails.
 
@@ -79,7 +84,7 @@ StatsInv ==
                 TLCGet("stats").traces, TLCGet("level"),
                 Cardinality(P), Cardinality(C), B,
                 over, under
-            >>, ToFile)
+            >>, CSVFile)
 
 GraphInv ==
     \* Periodically, have TLC regenerate the graph.
