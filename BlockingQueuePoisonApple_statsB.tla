@@ -1,6 +1,11 @@
 ---- MODULE BlockingQueuePoisonApple_statsB ----
 EXTENDS TLC, TLCExt, IOUtils, Json, CSV, FiniteSets, Sequences, Integers
 
+\* Collecting statistics only works correctly with a new enough version of TLC.
+ASSUME TLCGet("revision").timestamp >= 1626756710
+
+---------------------------------------------------------------------------
+
 Max(a,b) ==
     IF a > b THEN a ELSE b
 
@@ -37,7 +42,7 @@ ASSUME TLCGet("config").depth = -1
 ToFile ==
     "BQPA_B_" \o ToString(JavaTime)
 
-ASSUME JsonSerialize(ToFile \o ".json", <<TLCGet("config")>>)
+ASSUME JsonSerialize(ToFile \o ".json", <<TLCGet("config"), TLCGet("revision")>>)
 
 CSVFile ==
     ToFile \o ".csv"
