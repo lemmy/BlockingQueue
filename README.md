@@ -13,6 +13,11 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v29 (Starvation): Advanced fairness ruling out starvation entirely.
+
+Stipulates that `Get` actions (consumers!) will eventually notify *all* waiting producers. In other words, given repeated  `Get` actions (we don't care which consumer, thus, existential quantification), all waiting producers will eventually be notified. Because  `Get`  actions are not continuously enabled (the buffer might be empty), weak fairness is not strong enough. Obviously, no real system scheduler implements such an inefficient "policy".
+This fairness constraint was initially proposed by Leslie Lamport (with the minor typo "in" instead of "notin", which happens to hold for configurations with at most two producers).
+
 ### v28 (Starvation): Weak fairness defined for Put.
 
 Defining ```Next``` to be (weakly) [fair](https://pron.github.io/posts/tlaplus_part3#machine-closure-and-fairness) makes only sure that a Next-step is (eventually) taken.  However, ```Next``` is a disjunct of the ```Put``` and ```Get``` sub-actions and fairness does not distribute.  Since, we want all producers to eventually take steps, we specify (weak) fairness at the level of the ```Put``` sub-actions.  Unfortunately, producers can still starve:
