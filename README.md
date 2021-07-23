@@ -13,6 +13,33 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v30 (Starvation): Liveness-check multiple configurations.
+
+The trick of adding auxiliary variables to check sets of constants values as in [v06](#v06-continue-convert-constants-into-variables) does not work if we verify liveness properties (`Producer` and `Consumer` in the fairness constraint become [state-level](http://lamport.azurewebsites.net/tla/newmodule.html)). Instead, we come up with another trick that lets us check sets of constant values: By writing a new spec `BlockingQueueMC.tla` extending `BlockingQueue` that redefines the three constants `P`, `C`, and `B` with expressions that read (concrete) values from the process' environment variables (which is what the `IOEnv` operator from the [`IOUtils`](https://github.com/tlaplus/CommunityModules/blob/master/modules/IOUtils.tla) CommunityModules is for).
+At this point, we could write a shell script in today's favorite scripting language to repeatedly invoke TLC for various configurations (TLC wrappers such as [tlacli](https://github.com/hwayne/tlacli) make this easier). However, I prefer to keep things simple and also use the expressiveness of TLA+. Thus, again with the help of the [`IOUtils` module](https://github.com/tlaplus/CommunityModules/blob/master/modules/IOUtils.tla#L26-L32), a TLA+ one-liner will check a set of constants. When evaluated with the REPL, it equals a set of results that can be processed (filtered, converted, printed, ...) further.
+
+```tla
+$ tlcrepl
+Welcome to the TLA+ REPL!
+TLC2 Version 2.16 of Day Month 20??
+Enter a constant-level TLA+ expression.
+(tla+) LET TLC==<<"java", "-jar", "/opt/toolbox/tla2tools.jar", "-config", "BlockingQueueMC.tla", "-workers", "auto", "-noTE", "BlockingQueueMC">> IN { <<Conf, IOEnvExec(Conf, TLC).exitValue>> : Conf \in [ {"P","C","B"} -> 1..4 ] }
+{<<[B |-> 1, P |-> 1, C |-> 1], 0>>, <<[B |-> 1, P |-> 1, C |-> 2], 0>>, <<[B |-> 1, P |-> 1, C |-> 3], 0>>, <<[B |-> 1, P |-> 1, C |-> 4], 0>>, <<[B |-> 1, P |-> 2, C |-> 1], 0>>, <<[B |-> 1, P |-> 2, C |-> 2], 0>>, <<[B |-> 1, P |-> 2, C |-> 3], 0>>, <<[B |-> 1, P |-> 2, C |-> 4], 0>>, <<[B |-> 1, P |-> 3, C |-> 1], 0>>, <<[B |-> 1, P |-> 3, C |-> 2], 0>>, <<[B |-> 1, P |-> 3, C |-> 3], 0>>, <<[B |-> 1, P |-> 3, C |-> 4], 0>>, <<[B |-> 1, P |-> 4, C |-> 1], 0>>, <<[B |-> 1, P |-> 4, C |-> 2], 0>>, <<[B |-> 1, P |-> 4, C |-> 3], 0>>, <<[B |-> 1, P |-> 4, C |-> 4], 0>>, <<[B |-> 2, P |-> 1, C |-> 1], 0>>, <<[B |-> 2, P |-> 1, C |-> 2], 0>>, <<[B |-> 2, P |-> 1, C |-> 3], 0>>, <<[B |-> 2, P |-> 1, C |-> 4], 0>>, <<[B |-> 2, P |-> 2, C |-> 1], 0>>, <<[B |-> 2, P |-> 2, C |-> 2], 0>>, <<[B |-> 2, P |-> 2, C |-> 3], 0>>, <<[B |-> 2, P |-> 2, C |-> 4], 0>>, <<[B |-> 2, P |-> 3, C |-> 1], 0>>, <<[B |-> 2, P |-> 3, C |-> 2], 0>>, <<[B |-> 2, P |-> 3, C |-> 3], 0>>, <<[B |-> 2, P |-> 3, C |-> 4], 0>>, <<[B |-> 2, P |-> 4, C |-> 1], 0>>, <<[B |-> 2, P |-> 4, C |-> 2], 0>>, <<[B |-> 2, P |-> 4, C |-> 3], 0>>, <<[B |-> 2, P |-> 4, C |-> 4], 0>>, <<[B |-> 3, P |-> 1, C |-> 1], 0>>, <<[B |-> 3, P |-> 1, C |-> 2], 0>>, <<[B |-> 3, P |-> 1, C |-> 3], 0>>, <<[B |-> 3, P |-> 1, C |-> 4], 0>>, <<[B |-> 3, P |-> 2, C |-> 1], 0>>, <<[B |-> 3, P |-> 2, C |-> 2], 0>>, <<[B |-> 3, P |-> 2, C |-> 3], 0>>, <<[B |-> 3, P |-> 2, C |-> 4], 0>>, <<[B |-> 3, P |-> 3, C |-> 1], 0>>, <<[B |-> 3, P |-> 3, C |-> 2], 0>>, <<[B |-> 3, P |-> 3, C |-> 3], 0>>, <<[B |-> 3, P |-> 3, C |-> 4], 0>>, <<[B |-> 3, P |-> 4, C |-> 1], 0>>, <<[B |-> 3, P |-> 4, C |-> 2], 0>>, <<[B |-> 3, P |-> 4, C |-> 3], 0>>, <<[B |-> 3, P |-> 4, C |-> 4], 0>>, <<[B |-> 4, P |-> 1, C |-> 1], 0>>, <<[B |-> 4, P |-> 1, C |-> 2], 0>>, <<[B |-> 4, P |-> 1, C |-> 3], 0>>, <<[B |-> 4, P |-> 1, C |-> 4], 0>>, <<[B |-> 4, P |-> 2, C |-> 1], 0>>, <<[B |-> 4, P |-> 2, C |-> 2], 0>>, <<[B |-> 4, P |-> 2, C |-> 3], 0>>, <<[B |-> 4, P |-> 2, C |-> 4], 0>>, <<[B |-> 4, P |-> 3, C |-> 1], 0>>, <<[B |-> 4, P |-> 3, C |-> 2], 0>>, <<[B |-> 4, P |-> 3, C |-> 3], 0>>, <<[B |-> 4, P |-> 3, C |-> 4], 0>>, <<[B |-> 4, P |-> 4, C |-> 1], 0>>, <<[B |-> 4, P |-> 4, C |-> 2], 0>>, <<[B |-> 4, P |-> 4, C |-> 3], 0>>, <<[B |-> 4, P |-> 4, C |-> 4], 0>>}
+```
+
+Another nice property of the `IOEnv` trickery is that one can check spec variants without relying on sed, awk, ..., and the likes.  For example, the `ConditionalFairSpec` formula below could re-defining `FairSpec` and then checked for all configurations in `{ [P|->c[1],C|->c[2],B|->c[3],F|->c[4]] : c \in ((1..3) \X (1..3) \X (1..2) \X {"A","B","C"}) }`.
+
+```tla
+ConditionalFairSpec == 
+/\ Spec
+/\ LET f == IOEnv.F IN
+   IF "A" = f
+   THEN SomeFairnessCandidate
+   ELSE IF "B" = f
+        THEN AnotherFairnessCandidate
+        ELSE YetAnotherFairnessCandidate
+```
+
 ### v29 (Starvation): Advanced fairness ruling out starvation entirely.
 
 Stipulates that `Get` actions (consumers!) will eventually notify *all* waiting producers. In other words, given repeated  `Get` actions (we don't care which consumer, thus, existential quantification), all waiting producers will eventually be notified. Because  `Get`  actions are not continuously enabled (the buffer might be empty), weak fairness is not strong enough. Obviously, no real system scheduler implements such an inefficient "policy".
