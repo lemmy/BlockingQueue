@@ -115,12 +115,38 @@ MCIInv == TypeInv!1 /\ IInv
 
 PutEnabled == \A p \in Producers : ENABLED Put(p, p)
 
-FairSpec == Spec /\ WF_vars(Next) 
-                 /\ \A p \in Producers : WF_vars(Put(p, p)) 
+FairSpec == 
+    /\ Spec
+
+    \* Assert that producers take steps should their  Put  action be (continuously) 
+    \* enabled. This is the basic case of fairness that rules out stuttering, i.e.,
+    \* assert global progress.
+    /\ \A t \in Producers:
+            WF_vars(Put(t,t)) 
+    \* Stipulates that  Get  actions (consumers!) will eventually notify *all*
+    \* waiting producers. In other words, given repeated  Get  actions (we don't
+    \* care which consumer, thus, existential quantification), all waiting
+    \* producers will eventually be notified.  Because  Get  actions are not
+    \* continuously enabled (the buffer might be empty), weak fairness is not
+    \* strong enough. Obviously, no real system scheduler implements such an
+    \* inefficient "policy".
+    \* This fairness constraint was initially proposed by Leslie Lamport, although
+    \* with the minor typo "in" instead of "notin", which happens to hold for
+    \* configurations with at most two producers.
+    /\ \A t \in Producers:
+            SF_vars(\E self \in Consumers: Get(self) /\ t \notin waitSet')
+
+    \* See notes above (except swap "producer" with "consumer").
+    /\ \A t \in Consumers:
+            WF_vars(Get(t)) 
+    /\ \A t \in Consumers:
+            SF_vars(\E self \in Producers: Put(self, self) /\ t \notin waitSet')
 
 (* All producers will continuously be serviced. For this to be violated,    *)
 (* ASSUME Cardinality(Producers) > 1 has to hold (a single producer cannot  *)
 (* starve itself).                                                          *)
-Starvation == \A p \in Producers: []<>(<<Put(p, p)>>_vars)
+Starvation ==
+    /\ \A p \in Producers: []<>(<<Put(p, p)>>_vars)
+    /\ \A c \in Consumers: []<>(<<Get(c)>>_vars)
 
 =============================================================================
