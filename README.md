@@ -13,6 +13,16 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v39 (Statistics): Sweep (P,C,B) configurations to measure consumer over- and under-provisioning of BlockingQueuePoisonApple.
+
+A first pass at collecting empirical statistics from `BlockingQueuePoisonApple` and turning them into plots, in three pieces:
+
+* `BlockingQueuePoisonApple_stats.tla` constrains the otherwise unrestricted next-state relation: each producer is given a fixed `Work` quota tracked in an auxiliary variable `pending`, so simulation runs reflect a realistic workload instead of arbitrary interleavings.  Two further auxiliary variables `over` and `under` track the running maximum/minimum of `|active consumers| - |active producers|`, i.e. how badly the system is over- and under-provisioned along the trace.  On global termination, `StatsInv` writes one CSV record per behavior via `CSVWrite` (`trace,level,P,C,B,over,under`).
+* `BlockingQueuePoisonApple_statsSC.tla` is a TLC-as-shell driver that uses `IOEnvExec` to fork nested TLC instances for every symmetric `(P,C,B)` configuration in `{1,2,4,8,16,32}^3`, runs each in `-generate` (simulation) mode, and then invokes `Rscript` on the resulting CSV via `IOExec`.
+* `BlockingQueuePoisonApple_stats.R` aggregates the CSV with `aggregate`, computes mean and standard deviation of `over`/`under` per configuration, and renders a horizontal bar chart with error bars to SVG using `ggplot2`.
+
+Marked WIP because the workload model is still very crude (fixed `Work` per producer rather than probabilistic `Put`/`Terminate`, see the comment in `BlockingQueuePoisonApple_stats.tla` pointing at [`PageQueue`](https://github.com/lemmy/PageQueue/blob/master/PageQueue.tla)) and because Welford's online algorithm for variance/standard deviation should really live in TLC itself rather than being re-implemented in R.
+
 ### v38 (Termination): Prove termination of the BlockingQueuePoisonApple spec.
 
 A TLAPS proof of all safety properties of `BlockingQueuePoisonApple`, including its termination property: every consumer eventually dies after eating `M` Poison Apple slices, where `M` is the number of producers.  The proof lives in a separate `BlockingQueuePoisonApple_proofs.tla` module so the main spec stays free of TLAPS-specific declarations.
