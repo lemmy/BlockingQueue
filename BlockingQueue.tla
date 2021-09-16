@@ -1,16 +1,17 @@
 --------------------------- MODULE BlockingQueue ---------------------------
-EXTENDS Naturals, Sequences, FiniteSets
+EXTENDS Naturals, Sequences, FiniteSets, TLC
 
 CONSTANTS Producers,   (* the (nonempty) set of producers                       *)
           Consumers,   (* the (nonempty) set of consumers                       *)
           BufCapacity  (* the maximum number of messages in the bounded buffer  *)
+          ,Feature
 
 ASSUME Assumption ==
        /\ Producers # {}                      (* at least one producer *)
        /\ Consumers # {}                      (* at least one consumer *)
        /\ Producers \intersect Consumers = {} (* no thread is both consumer and producer *)
        /\ BufCapacity \in (Nat \ {0})         (* buffer capacity is at least 1 *)
-       
+       /\ Feature \in {"no", "na"}
 -----------------------------------------------------------------------------
 
 VARIABLES buffer, waitSet
@@ -30,21 +31,36 @@ Wait(t) == /\ waitSet' = waitSet \cup {t}
            
 -----------------------------------------------------------------------------
 
+acquire == 0
+worked  == 1
+ASSUME TLCSet(acquire, 0) /\ TLCSet(worked, 0)
+
 Put(t, d) ==
 /\ t \notin waitSet
+/\ TLCSet(acquire, TLCGet(acquire)+1)
 /\ \/ /\ Len(buffer) < BufCapacity
       /\ buffer' = Append(buffer, d)
-      /\ NotifyOther(t)
+      /\ IF Feature = "no" THEN NotifyOther(t) ELSE waitSet' = {}
+      /\ TLCSet(worked, TLCGet(worked)+1)
    \/ /\ Len(buffer) = BufCapacity
       /\ Wait(t)
-      
+
+G1(t) ==
+    /\ t \notin waitSet
+    /\ TLCSet(acquire, TLCGet(acquire)+1)
+    /\ buffer # <<>>
+    /\ buffer' = Tail(buffer)
+    /\ IF Feature = "no" THEN NotifyOther(t) ELSE waitSet' = {}
+  
+G2(t) ==
+    /\ t \notin waitSet
+    /\ TLCSet(acquire, TLCGet(acquire)+1)
+    /\ buffer = <<>>
+    /\ Wait(t)
+
 Get(t) ==
-/\ t \notin waitSet
-/\ \/ /\ buffer # <<>>
-      /\ buffer' = Tail(buffer)
-      /\ NotifyOther(t)
-   \/ /\ buffer = <<>>
-      /\ Wait(t)
+    \/ G1(t)
+    \/ G2(t)
 
 -----------------------------------------------------------------------------
 
@@ -53,8 +69,10 @@ Init == /\ buffer = <<>>
         /\ waitSet = {}
 
 (* Then, pick a thread out of all running threads and have it do its thing. *)
-Next == \/ \E p \in Producers: Put(p, p) \* Add some data to buffer
-        \/ \E c \in Consumers: Get(c)
+Next == 
+    /\ TLCGet("level") = 1 => (TLCSet(acquire, 0) /\ TLCSet(worked, 0))
+    /\ \/ \E p \in Producers: Put(p, p) \* Add some data to buffer
+       \/ \E c \in Consumers: Get(c)
 
 -----------------------------------------------------------------------------
 
