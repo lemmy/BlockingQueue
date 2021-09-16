@@ -44,9 +44,9 @@ public class App {
 				this.producers = Integer.parseInt(args[1]);
 				this.consumers = Integer.parseInt(args[2]);
 			} else {
-				this.bufCapacity = 3;
-				this.producers = 4;
-				this.consumers = 3;
+				this.bufCapacity = 1;
+				this.producers = 6;
+				this.consumers = 6;
 			}
 		}
 	}

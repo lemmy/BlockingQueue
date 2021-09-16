@@ -8,8 +8,7 @@ Run on the command line as:
                     "-config", "BlockingQueueStats.tla",
                     "-workers", "auto", "-noTE", "BlockingQueueStats">>
             IN { <<Conf, IOEnvExec(Conf, TLC).exitValue>> : 
-                        Conf \in {[P|->c[1], B|->c[2], C|->c[3], F|->c[4]] : 
-                             c \in (1..4) \X (1..4) \X (1..4) \X {"no","na"} }'
+                        Conf \in { [P: 1..4, C: 1..4, B: 1..1, F: {"na","no"}] }'
 
 ---------------------- MODULE BlockingQueueStats ---------------------------
 EXTENDS BlockingQueue, IOUtils, TLC, TLCExt, Functions, CSV
@@ -29,13 +28,16 @@ C ==
 F ==
     IOEnv.F
 
+\* waitSet == waitSetC
+\* F == "sp"
 -----------------------------------------------------------------------------
 
 CSVFile ==
-   "output.csv"
+    "output.csv"
+\*    "P" \o IOEnv.P \o "_C" \o IOEnv.C \o "_B" \o IOEnv.B \o ".csv"
 
 ASSUME
-    CSVRecords("output.csv") = 0 => 
+    CSVRecords(CSVFile) = 0 => 
         CSVWrite("F#P#C#B#Level#WaitSet#EP#EC#lock#worked", <<>>, CSVFile)
 
 Statistics ==

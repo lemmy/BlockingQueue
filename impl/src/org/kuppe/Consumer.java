@@ -1,13 +1,9 @@
 package org.kuppe;
 
-import java.util.Random;
 import java.util.concurrent.Callable;
 
 class Consumer implements Callable<Void> {
 	
-	private static final int sleepCons = 23;
-	
-	private final Random rand = new Random();
 	private final BlockingQueue<String> queue;
 
 	public Consumer(final BlockingQueue<String> queue) {
@@ -16,13 +12,16 @@ class Consumer implements Callable<Void> {
 
 	@Override
 	public Void call() throws Exception {
+		long l = 0l;
 		while (true) {
+			l++;
 			final Object take = queue.take();
 			if (take == null) {
 				throw new NullPointerException();
 			}
-			System.out.printf("C took %s\n", take);
-			Thread.sleep(rand.nextInt(sleepCons));
+			if (l % 1000000 == 0) {
+				System.out.printf("Throughput %s\n", l);
+			}
 		}
 	}
 }

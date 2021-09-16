@@ -1,5 +1,5 @@
 ------------------------- MODULE BlockingQueueSplit -------------------------
-EXTENDS Naturals, Sequences, FiniteSets
+EXTENDS Naturals, Sequences, FiniteSets, TLC
 
 CONSTANTS Producers,   (* the (nonempty) set of producers                       *)
           Consumers,   (* the (nonempty) set of consumers                       *)
@@ -30,18 +30,25 @@ Wait(ws, t) == /\ ws' = ws \cup {t}
            
 -----------------------------------------------------------------------------
 
+acquire == 0
+worked  == 1
+ASSUME TLCSet(acquire, 0) /\ TLCSet(worked, 0)
+
 Put(t, d) ==
 /\ t \notin waitSetP
+/\ TLCSet(acquire, TLCGet(acquire)+1)
 /\ \/ /\ Len(buffer) < BufCapacity
       /\ buffer' = Append(buffer, d)
       /\ NotifyOther(waitSetC)
       /\ UNCHANGED waitSetP
+      /\ TLCSet(worked, TLCGet(worked)+1)
    \/ /\ Len(buffer) = BufCapacity
       /\ Wait(waitSetP, t)
       /\ UNCHANGED waitSetC
       
 Get(t) ==
 /\ t \notin waitSetC
+/\ TLCSet(acquire, TLCGet(acquire)+1)
 /\ \/ /\ buffer # <<>>
       /\ buffer' = Tail(buffer)
       /\ NotifyOther(waitSetP)
@@ -68,7 +75,7 @@ Next == \/ \E p \in Producers: Put(p, p) \* Add some data to buffer
 Spec == Init /\ [][Next]_vars
 
 -----------------------------------------------------------------------------
-
+====
 (* BlockingQueueSplit refines BlockingQueue. The refinement mapping is *)
 (* straight forward in this case. The union of waitSetC and waitSetP   *)
 (* maps to waitSet in the high-level spec BlockingQueue.               *)

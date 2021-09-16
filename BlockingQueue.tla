@@ -37,7 +37,7 @@ ASSUME TLCSet(acquire, 0) /\ TLCSet(worked, 0)
 
 Put(t, d) ==
 /\ t \notin waitSet
-/\ TLCSet(acquire, TLCGet(acquire)+1)
+\* /\ TLCSet(acquire, TLCGet(acquire)+1)
 /\ \/ /\ Len(buffer) < BufCapacity
       /\ buffer' = Append(buffer, d)
       /\ IF Feature = "no" THEN NotifyOther(t) ELSE waitSet' = {}
@@ -45,22 +45,14 @@ Put(t, d) ==
    \/ /\ Len(buffer) = BufCapacity
       /\ Wait(t)
 
-G1(t) ==
-    /\ t \notin waitSet
-    /\ TLCSet(acquire, TLCGet(acquire)+1)
-    /\ buffer # <<>>
-    /\ buffer' = Tail(buffer)
-    /\ IF Feature = "no" THEN NotifyOther(t) ELSE waitSet' = {}
-  
-G2(t) ==
-    /\ t \notin waitSet
-    /\ TLCSet(acquire, TLCGet(acquire)+1)
-    /\ buffer = <<>>
-    /\ Wait(t)
-
 Get(t) ==
-    \/ G1(t)
-    \/ G2(t)
+/\ t \notin waitSet
+\* /\ TLCSet(acquire, TLCGet(acquire)+1)
+/\ \/ /\ buffer # <<>>
+      /\ buffer' = Tail(buffer)
+    /\ IF Feature = "no" THEN NotifyOther(t) ELSE waitSet' = {}
+   \/ /\ buffer = <<>>
+      /\ Wait(t)
 
 -----------------------------------------------------------------------------
 
