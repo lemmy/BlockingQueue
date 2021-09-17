@@ -44,8 +44,8 @@ Statistics ==
     CSVWrite("%1$s#%2$s#%3$s#%4$s#%5$s#%6$s#%7$s#%8$s#%9$s#%10$s",
         <<F, Cardinality(P), Cardinality(C), B, 
             TLCGet("level"), Cardinality(waitSet), 
-            Cardinality({ p \in Producers: ENABLED Put(p,p) }),
-            Cardinality({ c \in Consumers: ENABLED Get(c) }),
+            0,\*Cardinality({ p \in Producers: ENABLED Put(p,p) }),
+            0,\*Cardinality({ c \in Consumers: ENABLED Get(c) }),
             TLCGet(acquire), TLCGet(worked)
         >>, CSVFile)
 

@@ -36,22 +36,25 @@ worked  == 1
 ASSUME TLCSet(acquire, 0) /\ TLCSet(worked, 0)
 
 Put(t, d) ==
-/\ t \notin waitSet
-\* /\ TLCSet(acquire, TLCGet(acquire)+1)
-/\ \/ /\ Len(buffer) < BufCapacity
+\* /\ t \notin waitSet
+/\ \/ /\ TLCSet(acquire, TLCGet(acquire)+1)
+      /\ Len(buffer) < BufCapacity
       /\ buffer' = Append(buffer, d)
       /\ IF Feature = "no" THEN NotifyOther(t) ELSE waitSet' = {}
       /\ TLCSet(worked, TLCGet(worked)+1)
-   \/ /\ Len(buffer) = BufCapacity
+   \/ /\ TLCSet(acquire, TLCGet(acquire)+1)
+      /\ Len(buffer) = BufCapacity
       /\ Wait(t)
 
 Get(t) ==
-/\ t \notin waitSet
+\* /\ t \notin waitSet
 \* /\ TLCSet(acquire, TLCGet(acquire)+1)
-/\ \/ /\ buffer # <<>>
+/\ \/ /\ TLCSet(acquire, TLCGet(acquire)+1)
+      /\ buffer # <<>>
       /\ buffer' = Tail(buffer)
-    /\ IF Feature = "no" THEN NotifyOther(t) ELSE waitSet' = {}
-   \/ /\ buffer = <<>>
+      /\ IF Feature = "no" THEN NotifyOther(t) ELSE waitSet' = {}
+   \/ /\ TLCSet(acquire, TLCGet(acquire)+1)
+      /\ buffer = <<>>
       /\ Wait(t)
 
 -----------------------------------------------------------------------------
@@ -63,8 +66,8 @@ Init == /\ buffer = <<>>
 (* Then, pick a thread out of all running threads and have it do its thing. *)
 Next == 
     /\ TLCGet("level") = 1 => (TLCSet(acquire, 0) /\ TLCSet(worked, 0))
-    /\ \/ \E p \in Producers: Put(p, p) \* Add some data to buffer
-       \/ \E c \in Consumers: Get(c)
+    /\ \/ \E p \in Producers \ waitSet: Put(p, p) \* Add some data to buffer
+       \/ \E c \in Consumers \ waitSet: Get(c)
 
 -----------------------------------------------------------------------------
 

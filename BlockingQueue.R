@@ -33,8 +33,8 @@ for (conf in 1:nrow(configs)) {
   p2 <- plot_ly(df, y = ~worked, x = ~Level, color=~F, type = 'scatter', mode = 'lines') %>%
     add_markers()
   
-#  plts <- append(plts, list(subplot(p1, p2, shareY = TRUE)))
-  plts <- append(plts, list(p2))
+  plts <- append(plts, list(subplot(p1, p2, shareY = TRUE)))
+#  plts <- append(plts, list(p2))
 }
 
 subplot(plts, nrows = 4, titleX = TRUE, titleY = TRUE)
