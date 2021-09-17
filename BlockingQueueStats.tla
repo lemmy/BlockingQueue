@@ -4,11 +4,12 @@ Run on the command line as:
  alias tlcrepl='java -cp /opt/toolbox/CommunityModules-deps.jar:/opt/toolbox/tla2tools.jar tlc2.REPL'
 
  # Check all permutations of P, C, and B for the values {1,2,3,4}.
- $ tlcrepl 'LET TLC==<<"java", "-jar", "/opt/toolbox/tla2tools.jar", 
+ $ tlcrepl 'LET TLC==<<"java", "-jar", "/opt/toolbox/tla2tools.jar",
                     "-config", "BlockingQueueStats.tla",
-                    "-workers", "auto", "-noTE", "BlockingQueueStats">>
-            IN { <<Conf, IOEnvExec(Conf, TLC).exitValue>> : 
-                        Conf \in { [P: 1..4, C: 1..4, B: 1..1, F: {"na","no"}] }'
+                    "-workers", "1", "-noTE", "-generate", "num=10",
+                    "BlockingQueueStats">>
+            IN { <<Conf, IOEnvExec(Conf, TLC).exitValue>> :
+                        Conf \in [P: 1..4, C: 1..4, B: 1..1, F: {"na","no"}] }'
 
 ---------------------- MODULE BlockingQueueStats ---------------------------
 EXTENDS BlockingQueue, IOUtils, TLC, TLCExt, Functions, CSV
@@ -28,8 +29,6 @@ C ==
 F ==
     IOEnv.F
 
-\* waitSet == waitSetC
-\* F == "sp"
 -----------------------------------------------------------------------------
 
 CSVFile ==

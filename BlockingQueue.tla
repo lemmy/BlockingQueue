@@ -37,25 +37,27 @@ ASSUME TLCSet(acquire, 0) /\ TLCSet(worked, 0)
 
 Put(t, d) ==
 \* /\ t \notin waitSet
-/\ \/ /\ TLCSet(acquire, TLCGet(acquire)+1)
+\* /\ 
+   IF /\ TLCSet(acquire, TLCGet(acquire)+1)
       /\ Len(buffer) < BufCapacity
-      /\ buffer' = Append(buffer, d)
-      /\ IF Feature = "no" THEN NotifyOther(t) ELSE waitSet' = {}
-      /\ TLCSet(worked, TLCGet(worked)+1)
-   \/ /\ TLCSet(acquire, TLCGet(acquire)+1)
-      /\ Len(buffer) = BufCapacity
-      /\ Wait(t)
+   THEN /\ buffer' = Append(buffer, d)
+        /\ IF Feature = "no" THEN NotifyOther(t) ELSE waitSet' = {}
+    \*   /\ TLCSet(worked, TLCGet(worked)+1)
+   ELSE /\ Len(buffer) = BufCapacity
+        /\ Wait(t)
 
 Get(t) ==
 \* /\ t \notin waitSet
 \* /\ TLCSet(acquire, TLCGet(acquire)+1)
-/\ \/ /\ TLCSet(acquire, TLCGet(acquire)+1)
+\* /\ 
+   \* TODO Rewrite to IF-THEN-ELSE to more honestly model the implementation.
+   IF /\ TLCSet(acquire, TLCGet(acquire)+1)
       /\ buffer # <<>>
-      /\ buffer' = Tail(buffer)
-      /\ IF Feature = "no" THEN NotifyOther(t) ELSE waitSet' = {}
-   \/ /\ TLCSet(acquire, TLCGet(acquire)+1)
-      /\ buffer = <<>>
-      /\ Wait(t)
+   THEN /\ buffer' = Tail(buffer)
+        /\ IF Feature = "no" THEN NotifyOther(t) ELSE waitSet' = {}
+   ELSE /\ TLCSet(acquire, TLCGet(acquire)+1)
+        /\ buffer = <<>>
+        /\ Wait(t)
 
 -----------------------------------------------------------------------------
 
@@ -65,7 +67,8 @@ Init == /\ buffer = <<>>
 
 (* Then, pick a thread out of all running threads and have it do its thing. *)
 Next == 
-    /\ TLCGet("level") = 1 => (TLCSet(acquire, 0) /\ TLCSet(worked, 0))
+    \* TODO Remove implication here and found a better way to reset TLCSet/Get.
+    /\ (TLCGet("level") = 1 => (TLCSet(acquire, 0) /\ TLCSet(worked, 0)))
     /\ \/ \E p \in Producers \ waitSet: Put(p, p) \* Add some data to buffer
        \/ \E c \in Consumers \ waitSet: Get(c)
 
