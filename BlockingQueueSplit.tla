@@ -108,3 +108,4 @@ THEOREM Implements == Spec => A!Spec
 <1>3. QED BY <1>1, <1>2, PTL, ITypeInv DEF Spec, A!Spec
 
 =============================================================================
+LET TLC==<<"java", "-jar", "/home/markus/src/TLA/tla/tlatools/org.lamport.tlatools/dist/tla2tools.jar", "-config", "BlockingQueueStats.tla", "-workers", "1", "-noTE", "-generate","num=20","-depth","10000","BlockingQueueStats">> IN { <<Conf, IOEnvExec(Conf, TLC).exitValue>> : Conf \in [P: 80..80, C: 80..80, B:{1,2,4,8}, F: {"na","no"}] }

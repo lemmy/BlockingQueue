@@ -37,15 +37,16 @@ CSVFile ==
 
 ASSUME
     CSVRecords(CSVFile) = 0 => 
-        CSVWrite("F#P#C#B#Level#WaitSet#EP#EC#lock#worked", <<>>, CSVFile)
+        CSVWrite("F#P#C#B#Level#WaitSet#Busy#EC#clicks#worked", <<>>, CSVFile)
 
 Statistics ==
     CSVWrite("%1$s#%2$s#%3$s#%4$s#%5$s#%6$s#%7$s#%8$s#%9$s#%10$s",
         <<F, Cardinality(P), Cardinality(C), B, 
             TLCGet("level"), Cardinality(waitSet), 
-            0,\*Cardinality({ p \in Producers: ENABLED Put(p,p) }),
+            Cardinality(busy),
+            \*Cardinality({ p \in Producers: ENABLED Put(p,p) }),
             0,\*Cardinality({ c \in Consumers: ENABLED Get(c) }),
-            TLCGet(acquire), TLCGet(worked)
+            TLCGet(clicks), TLCGet(worked)
         >>, CSVFile)
 
 =============================================================================
@@ -64,6 +65,9 @@ SPECIFICATION Spec
 \* (except init states). The same problem is true for state- and
 \* action-constraints; they are evaluated on all *generated* states.
 INVARIANT Statistics
+
+POSTCONDITION
+    PostCondition
 
 CHECK_DEADLOCK FALSE
 =============================================================================

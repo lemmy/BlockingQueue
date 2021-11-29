@@ -5,6 +5,7 @@ CONSTANTS Producers,   (* the (nonempty) set of producers                       
           Consumers,   (* the (nonempty) set of consumers                       *)
           BufCapacity  (* the maximum number of messages in the bounded buffer  *)
           ,Feature
+\* Feature == "no"
 
 ASSUME Assumption ==
        /\ Producers # {}                      (* at least one producer *)
@@ -14,8 +15,8 @@ ASSUME Assumption ==
        /\ Feature \in {"no", "na"}
 -----------------------------------------------------------------------------
 
-VARIABLES buffer, waitSet
-vars == <<buffer, waitSet>>
+VARIABLES buffer, waitSet, busy, steps
+vars == <<buffer, waitSet, busy, steps>>
 
 RunningThreads == (Producers \cup Consumers) \ waitSet
 
@@ -31,46 +32,58 @@ Wait(t) == /\ waitSet' = waitSet \cup {t}
            
 -----------------------------------------------------------------------------
 
-acquire == 0
+clicks == 0
 worked  == 1
-ASSUME TLCSet(acquire, 0) /\ TLCSet(worked, 0)
+
+PostCondition == 
+    /\ TLCSet(clicks, 0)
+    /\ TLCSet(worked, 0)
+
+ASSUME /\ TLCSet(clicks, 0)
+       /\ TLCSet(worked, 0)
+
+-----------------------------------------------------------------------------
 
 Put(t, d) ==
-\* /\ t \notin waitSet
-\* /\ 
-   IF /\ TLCSet(acquire, TLCGet(acquire)+1)
-      /\ Len(buffer) < BufCapacity
+   IF Len(buffer) < BufCapacity
    THEN /\ buffer' = Append(buffer, d)
-        /\ IF Feature = "no" THEN NotifyOther(t) ELSE waitSet' = {}
-    \*   /\ TLCSet(worked, TLCGet(worked)+1)
-   ELSE /\ Len(buffer) = BufCapacity
-        /\ Wait(t)
+        /\ IF Feature = "no"
+           THEN NotifyOther(t)
+           ELSE waitSet' = {}
+        /\ UNCHANGED <<busy, steps>>
+   ELSE /\ Wait(t)
+        /\ UNCHANGED <<busy, steps>>
 
 Get(t) ==
-\* /\ t \notin waitSet
-\* /\ TLCSet(acquire, TLCGet(acquire)+1)
-\* /\ 
-   \* TODO Rewrite to IF-THEN-ELSE to more honestly model the implementation.
-   IF /\ TLCSet(acquire, TLCGet(acquire)+1)
-      /\ buffer # <<>>
+   IF buffer # <<>>
    THEN /\ buffer' = Tail(buffer)
-        /\ IF Feature = "no" THEN NotifyOther(t) ELSE waitSet' = {}
-   ELSE /\ TLCSet(acquire, TLCGet(acquire)+1)
-        /\ buffer = <<>>
-        /\ Wait(t)
+        /\ busy' = busy \cup {t}
+        /\ UNCHANGED steps\* steps' = [ clicks EXCEPT ![t] = TLCGet("level")]
+        /\ IF Feature = "no"
+           THEN NotifyOther(t)
+           ELSE waitSet' = {}
+   ELSE /\ Wait(t)
+        /\ UNCHANGED <<busy, steps>>
 
+Work(c) ==
+    \/ /\ busy' = busy \ {c}
+       /\ TLCSet(worked, TLCGet(worked)+1)
+       /\ UNCHANGED steps\* steps' = [ clicks EXCEPT ![t] = TLCGet("level")]
+       /\ UNCHANGED <<buffer, waitSet>>
+    \/ UNCHANGED <<busy, buffer, waitSet, steps>>
 -----------------------------------------------------------------------------
 
 (* Initially, the buffer is empty and no thread is waiting. *)
 Init == /\ buffer = <<>>
         /\ waitSet = {}
+        /\ busy = {}
+        /\ steps = [ c \in Consumers |-> 0 ]
 
 (* Then, pick a thread out of all running threads and have it do its thing. *)
 Next == 
-    \* TODO Remove implication here and found a better way to reset TLCSet/Get.
-    /\ (TLCGet("level") = 1 => (TLCSet(acquire, 0) /\ TLCSet(worked, 0)))
-    /\ \/ \E p \in Producers \ waitSet: Put(p, p) \* Add some data to buffer
-       \/ \E c \in Consumers \ waitSet: Get(c)
+    \/ \E p \in Producers \ waitSet: Put(p, p)
+    \/ \E c \in Consumers \ (waitSet \cup busy): Get(c)
+    \/ \E c \in busy: Work(c)
 
 -----------------------------------------------------------------------------
 

@@ -1,4 +1,4 @@
-library(ggplot2)
+#library(ggplot2)
 library(dplyr)
 library(plotly)
 
@@ -10,12 +10,34 @@ summary = summarise(group_by(data,P,C,B,F,Level),
   # sd_EC = sd(EC),
   # sd_Lock = sd(lock),
   # sd_Worked = sd(worked),
-  #WaitSet = mean(WaitSet),
+  WaitSet = ceiling(mean(WaitSet)),
+  Busy = ceiling(mean(Busy)),
   #EP = mean(EP),
-  #EC = mean(EC),
-  lock = mean(lock),
+  #EC = mean(EC),a
+  #lock = mean(lock),
   worked = mean(worked)
 )
+
+fig <- plot_ly(data = filter(data, Level==max(data$Level)),
+               x = ~C,
+               y = ~B,
+               z = ~worked,
+               name = "Throuhgput"
+)
+fig
+
+# ## Throughput
+# p2 <- plot_ly(summary, y = ~worked, x = ~Level, color=~F, type = 'scatter', mode = 'lines') %>%
+#   add_markers()
+# p2
+# ## Waitset
+# p3 <- plot_ly(summary, y = ~WaitSet, x = ~Level, color=~F, type = 'scatter', mode = 'lines') %>%
+#   add_markers()
+# p3
+# 
+# subplot(p2, p3, nrows = 2, titleX = TRUE, titleY = TRUE)
+
+###
 
 configs <- distinct(summary[1:3])
 
@@ -26,15 +48,22 @@ for (conf in 1:nrow(configs)) {
   c <- configs[conf,"C"]
   b <- configs[conf,"B"]
   df <- filter(summary, P==p, C==c, B==b)
-  ## Locks
-  p1 <- plot_ly(df, y = ~lock, x = ~Level, color = ~F, type = 'scatter', mode = 'markers') %>%
-    add_markers() %>% layout(yaxis=list(title=paste(p,c,b)))
   ## Throughput
-  p2 <- plot_ly(df, y = ~worked, x = ~Level, color=~F, type = 'scatter', mode = 'lines') %>%
+  p1 <- plot_ly(df, y = ~worked, x = ~Level, color=~F, type = 'scatter', mode = 'lines') %>%
+    add_markers() %>% layout(yaxis=list(title=paste("P/C/B", p, c, b)))
+  plts <- append(plts, list(p1))
+  ## Busy
+  p2 <- plot_ly(df, y = ~Busy, x = ~Level, color=~F, type = 'scatter', mode = 'lines') %>%
     add_markers()
+  plts <- append(plts, list(p2))
+  ## Waitset
+  p3 <- plot_ly(df, y = ~WaitSet, x = ~Level, color=~F, type = 'scatter', mode = 'lines') %>%
+    add_markers()
+  plts <- append(plts, list(p3))
   
-  plts <- append(plts, list(subplot(p1, p2, shareY = TRUE)))
+   # plts <- append(plts, list(subplot(p2, p3)))
 #  plts <- append(plts, list(p2))
 }
 
-subplot(plts, nrows = 4, titleX = TRUE, titleY = TRUE)
+subplot(plts, nrows = nrow(configs), titleY = TRUE, titleX = FALSE)
+
