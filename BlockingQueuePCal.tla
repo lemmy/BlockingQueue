@@ -33,12 +33,16 @@ K == 1..4
          }
     }
 
+    macro notifyAll() {
+         waitset := {};
+    }
+
     process (producer \in (p \ waitset)) {
          put: while (TRUE) {
                   if (isFull) { 
                     wait();
                   } else { 
-                    notify();
+                    notifyAll();
                     store := Append(store, self);
                   };
               };
@@ -49,13 +53,13 @@ K == 1..4
                  if (isEmpty) {
                     wait();
                  } else { 
-                    notify();
+                    notifyAll();
                     store := Tail(store);
                  };
               };
     }
 } *)
-\* BEGIN TRANSLATION (chksum(pcal) = "594b2795" /\ chksum(tla) = "8838126a")
+\* BEGIN TRANSLATION (chksum(pcal) = "44354781" /\ chksum(tla) = "1de24380")
 VARIABLES store, waitset, k, c, p
 
 (* define statement *)
@@ -79,22 +83,14 @@ Init == (* Global variables *)
 producer(self) == /\ IF isFull
                         THEN /\ waitset' = (waitset \cup {self})
                              /\ store' = store
-                        ELSE /\ IF waitset # {}
-                                   THEN /\ \E i \in waitset:
-                                             waitset' = waitset \ {i}
-                                   ELSE /\ TRUE
-                                        /\ UNCHANGED waitset
+                        ELSE /\ waitset' = {}
                              /\ store' = Append(store, self)
                   /\ UNCHANGED << k, c, p >>
 
 consumer(self) == /\ IF isEmpty
                         THEN /\ waitset' = (waitset \cup {self})
                              /\ store' = store
-                        ELSE /\ IF waitset # {}
-                                   THEN /\ \E i \in waitset:
-                                             waitset' = waitset \ {i}
-                                   ELSE /\ TRUE
-                                        /\ UNCHANGED waitset
+                        ELSE /\ waitset' = {}
                              /\ store' = Tail(store)
                   /\ UNCHANGED << k, c, p >>
 
