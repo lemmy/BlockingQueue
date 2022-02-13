@@ -13,6 +13,8 @@ EXTENDS Integers, FiniteSets, Sequences
     define {
          isFull == Len(store) = k
          isEmpty == Len(store) = 0
+
+         NoDeadlock == waitset # (c \cup p)
     }
 
     macro wait() { 
@@ -49,12 +51,14 @@ EXTENDS Integers, FiniteSets, Sequences
               };
     }
 } *)
-\* BEGIN TRANSLATION (chksum(pcal) = "e77de6b3" /\ chksum(tla) = "3c775ad7")
+\* BEGIN TRANSLATION (chksum(pcal) = "725fdb20" /\ chksum(tla) = "fd5e764b")
 VARIABLES store, waitset, k, c, p
 
 (* define statement *)
 isFull == Len(store) = k
 isEmpty == Len(store) = 0
+
+NoDeadlock == waitset # (c \cup p)
 
 
 vars == << store, waitset, k, c, p >>
