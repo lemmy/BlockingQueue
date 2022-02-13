@@ -33,6 +33,14 @@ K == 1..4
          }
     }
 
+    macro notifyOther(Other) {
+         if ((waitset \cap Other) # {}) {
+             with ( i \in (waitset \cap Other)) {
+                 waitset := waitset \ {i};
+             }
+         }
+    }
+
     macro notifyAll() {
          waitset := {};
     }
@@ -42,7 +50,7 @@ K == 1..4
                   if (isFull) { 
                     wait();
                   } else { 
-                    notifyAll();
+                    notifyOther(c);
                     store := Append(store, self);
                   };
               };
@@ -53,13 +61,13 @@ K == 1..4
                  if (isEmpty) {
                     wait();
                  } else { 
-                    notifyAll();
+                    notifyOther(p);
                     store := Tail(store);
                  };
               };
     }
 } *)
-\* BEGIN TRANSLATION (chksum(pcal) = "44354781" /\ chksum(tla) = "1de24380")
+\* BEGIN TRANSLATION (chksum(pcal) = "b0fc868f" /\ chksum(tla) = "d53ab8d6")
 VARIABLES store, waitset, k, c, p
 
 (* define statement *)
@@ -83,14 +91,22 @@ Init == (* Global variables *)
 producer(self) == /\ IF isFull
                         THEN /\ waitset' = (waitset \cup {self})
                              /\ store' = store
-                        ELSE /\ waitset' = {}
+                        ELSE /\ IF (waitset \cap c) # {}
+                                   THEN /\ \E i \in (waitset \cap c):
+                                             waitset' = waitset \ {i}
+                                   ELSE /\ TRUE
+                                        /\ UNCHANGED waitset
                              /\ store' = Append(store, self)
                   /\ UNCHANGED << k, c, p >>
 
 consumer(self) == /\ IF isEmpty
                         THEN /\ waitset' = (waitset \cup {self})
                              /\ store' = store
-                        ELSE /\ waitset' = {}
+                        ELSE /\ IF (waitset \cap p) # {}
+                                   THEN /\ \E i \in (waitset \cap p):
+                                             waitset' = waitset \ {i}
+                                   ELSE /\ TRUE
+                                        /\ UNCHANGED waitset
                              /\ store' = Tail(store)
                   /\ UNCHANGED << k, c, p >>
 
