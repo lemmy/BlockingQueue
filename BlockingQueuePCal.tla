@@ -1,14 +1,18 @@
  ------------------------- MODULE BlockingQueuePCal -------------------------
 EXTENDS Integers, FiniteSets, Sequences
 
+C == SUBSET {"c1", "c2", "c3", "c4"} \ {{}}
+P == SUBSET {"p1", "p2", "p3", "p4"} \ {{}}
+K == 1..4
+
 (* --algorithm BlockingQueue {
 
     variable 
         store = <<>>;
         waitset = {};
-        k = 1;
-        c = {"c1"};
-        p = {"p1","p2"};
+        k \in K;
+        c \in C;
+        p \in P;
 
     define {
          isFull == Len(store) = k
@@ -51,7 +55,7 @@ EXTENDS Integers, FiniteSets, Sequences
               };
     }
 } *)
-\* BEGIN TRANSLATION (chksum(pcal) = "725fdb20" /\ chksum(tla) = "fd5e764b")
+\* BEGIN TRANSLATION (chksum(pcal) = "594b2795" /\ chksum(tla) = "8838126a")
 VARIABLES store, waitset, k, c, p
 
 (* define statement *)
@@ -68,9 +72,9 @@ ProcSet == ((p \ waitset)) \cup ((c \ waitset))
 Init == (* Global variables *)
         /\ store = <<>>
         /\ waitset = {}
-        /\ k = 1
-        /\ c = {"c1"}
-        /\ p = {"p1","p2"}
+        /\ k \in K
+        /\ c \in C
+        /\ p \in P
 
 producer(self) == /\ IF isFull
                         THEN /\ waitset' = (waitset \cup {self})
