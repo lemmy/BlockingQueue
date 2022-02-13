@@ -5,7 +5,7 @@ c == {"c1"}
 p == {"p1", "p2"}
 k == 1
 
-(* --algorithm BlockingQueue {
+(* --fair algorithm BlockingQueue {
 
     variable 
         store = <<>>;
@@ -53,7 +53,7 @@ k == 1
               };
     }
 } *)
-\* BEGIN TRANSLATION (chksum(pcal) = "1a0c9d2c" /\ chksum(tla) = "5a576620")
+\* BEGIN TRANSLATION (chksum(pcal) = "7c28162a" /\ chksum(tla) = "d1f78689")
 VARIABLES store, waitsetC, waitsetP
 
 (* define statement *)
@@ -97,7 +97,8 @@ consumer(self) == IF isEmpty
 Next == (\E self \in (p \ waitsetP): producer(self))
            \/ (\E self \in (c \ waitsetC): consumer(self))
 
-Spec == Init /\ [][Next]_vars
+Spec == /\ Init /\ [][Next]_vars
+        /\ WF_vars(Next)
 
 \* END TRANSLATION 
 
