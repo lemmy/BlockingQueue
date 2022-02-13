@@ -27,7 +27,7 @@ EXTENDS Integers, FiniteSets, Sequences
          }
     }
 
-    process (producer \in p) {
+    process (producer \in (p \ waitset)) {
          put: while (TRUE) {
                   if (isFull) { 
                     wait();
@@ -38,7 +38,7 @@ EXTENDS Integers, FiniteSets, Sequences
               };
     }
 
-    process (consumer \in c) {
+    process (consumer \in (c \ waitset)) {
         take: while (TRUE) {
                  if (isEmpty) {
                     wait();
@@ -49,7 +49,7 @@ EXTENDS Integers, FiniteSets, Sequences
               };
     }
 } *)
-\* BEGIN TRANSLATION (chksum(pcal) = "367528b1" /\ chksum(tla) = "8ed57f00")
+\* BEGIN TRANSLATION (chksum(pcal) = "e77de6b3" /\ chksum(tla) = "3c775ad7")
 VARIABLES store, waitset, k, c, p
 
 (* define statement *)
@@ -59,7 +59,7 @@ isEmpty == Len(store) = 0
 
 vars == << store, waitset, k, c, p >>
 
-ProcSet == (p) \cup (c)
+ProcSet == ((p \ waitset)) \cup ((c \ waitset))
 
 Init == (* Global variables *)
         /\ store = <<>>
@@ -90,8 +90,8 @@ consumer(self) == /\ IF isEmpty
                              /\ store' = Tail(store)
                   /\ UNCHANGED << k, c, p >>
 
-Next == (\E self \in p: producer(self))
-           \/ (\E self \in c: consumer(self))
+Next == (\E self \in (p \ waitset): producer(self))
+           \/ (\E self \in (c \ waitset): consumer(self))
 
 Spec == Init /\ [][Next]_vars
 
