@@ -12,6 +12,7 @@ build/
 .project
 impl/producer_consumer
 CommunityModules/
+*.old
 
 ## Blacklist TLAPS cache folder
 ## See https://github.com/tlaplus/tlapm/issues/16
