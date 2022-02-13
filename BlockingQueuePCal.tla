@@ -9,7 +9,8 @@ K == 1..4
 
     variable 
         store = <<>>;
-        waitset = {};
+        waitsetC = {};
+        waitsetP = {};
         k \in K;
         c \in C;
         p \in P;
@@ -18,100 +19,91 @@ K == 1..4
          isFull == Len(store) = k
          isEmpty == Len(store) = 0
 
-         NoDeadlock == waitset # (c \cup p)
+         NoDeadlock == (waitsetC \cup waitsetP) # (c \cup p)
     }
 
-    macro wait() { 
-         waitset := waitset \cup {self}
+    macro wait(WaitSet) { 
+         WaitSet := WaitSet \cup {self}
     }
 
-    macro notify() {
-         if (waitset # {}) {
-             with ( i \in waitset ) {
-                 waitset := waitset \ {i};
+    macro notify(WaitSet) {
+         if (WaitSet # {}) {
+             with ( i \in WaitSet ) {
+                 WaitSet := WaitSet \ {i};
              }
          }
     }
 
-    macro notifyOther(Other) {
-         if ((waitset \cap Other) # {}) {
-             with ( i \in (waitset \cap Other)) {
-                 waitset := waitset \ {i};
-             }
-         }
-    }
-
-    macro notifyAll() {
-         waitset := {};
-    }
-
-    process (producer \in (p \ waitset)) {
+    process (producer \in (p \ waitsetP)) {
          put: while (TRUE) {
                   if (isFull) { 
-                    wait();
+                    wait(waitsetP);
                   } else { 
-                    notifyOther(c);
+                    notify(waitsetC);
                     store := Append(store, self);
                   };
               };
     }
 
-    process (consumer \in (c \ waitset)) {
+    process (consumer \in (c \ waitsetC)) {
         take: while (TRUE) {
                  if (isEmpty) {
-                    wait();
+                    wait(waitsetC);
                  } else { 
-                    notifyOther(p);
+                    notify(waitsetP);
                     store := Tail(store);
                  };
               };
     }
 } *)
-\* BEGIN TRANSLATION (chksum(pcal) = "b0fc868f" /\ chksum(tla) = "d53ab8d6")
-VARIABLES store, waitset, k, c, p
+\* BEGIN TRANSLATION (chksum(pcal) = "c78369b9" /\ chksum(tla) = "4525d6a")
+VARIABLES store, waitsetC, waitsetP, k, c, p
 
 (* define statement *)
 isFull == Len(store) = k
 isEmpty == Len(store) = 0
 
-NoDeadlock == waitset # (c \cup p)
+NoDeadlock == (waitsetC \cup waitsetP) # (c \cup p)
 
 
-vars == << store, waitset, k, c, p >>
+vars == << store, waitsetC, waitsetP, k, c, p >>
 
-ProcSet == ((p \ waitset)) \cup ((c \ waitset))
+ProcSet == ((p \ waitsetP)) \cup ((c \ waitsetC))
 
 Init == (* Global variables *)
         /\ store = <<>>
-        /\ waitset = {}
+        /\ waitsetC = {}
+        /\ waitsetP = {}
         /\ k \in K
         /\ c \in C
         /\ p \in P
 
 producer(self) == /\ IF isFull
-                        THEN /\ waitset' = (waitset \cup {self})
-                             /\ store' = store
-                        ELSE /\ IF (waitset \cap c) # {}
-                                   THEN /\ \E i \in (waitset \cap c):
-                                             waitset' = waitset \ {i}
+                        THEN /\ waitsetP' = (waitsetP \cup {self})
+                             /\ UNCHANGED << store, waitsetC >>
+                        ELSE /\ IF waitsetC # {}
+                                   THEN /\ \E i \in waitsetC:
+                                             waitsetC' = waitsetC \ {i}
                                    ELSE /\ TRUE
-                                        /\ UNCHANGED waitset
+                                        /\ UNCHANGED waitsetC
                              /\ store' = Append(store, self)
+                             /\ UNCHANGED waitsetP
                   /\ UNCHANGED << k, c, p >>
 
 consumer(self) == /\ IF isEmpty
-                        THEN /\ waitset' = (waitset \cup {self})
-                             /\ store' = store
-                        ELSE /\ IF (waitset \cap p) # {}
-                                   THEN /\ \E i \in (waitset \cap p):
-                                             waitset' = waitset \ {i}
+                        THEN /\ waitsetC' = (waitsetC \cup {self})
+                             /\ UNCHANGED << store, waitsetP >>
+                        ELSE /\ IF waitsetP # {}
+                                   THEN /\ \E i \in waitsetP:
+                                             waitsetP' = waitsetP \ {i}
                                    ELSE /\ TRUE
-                                        /\ UNCHANGED waitset
+                                        /\ UNCHANGED waitsetP
                              /\ store' = Tail(store)
+                             /\ UNCHANGED waitsetC
                   /\ UNCHANGED << k, c, p >>
 
-Next == (\E self \in (p \ waitset): producer(self))
-           \/ (\E self \in (c \ waitset): consumer(self))
+Next == (\E self \in (p \ waitsetP): producer(self))
+           \/ (\E self \in (c \ waitsetC): consumer(self))
 
 Spec == Init /\ [][Next]_vars
 
