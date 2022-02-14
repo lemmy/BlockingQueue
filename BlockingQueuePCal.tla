@@ -1,104 +1,129 @@
  ------------------------- MODULE BlockingQueuePCal -------------------------
 EXTENDS Integers, FiniteSets, Sequences
 
+Range(f) ==
+    { f[x] : x \in DOMAIN f}
+
 c == {"c1"}
 p == {"p1", "p2"}
 k == 1
 
-(* --fair algorithm BlockingQueue {
+(* --algorithm BlockingQueue {
 
     variable 
         store = <<>>;
-        waitsetC = {};
-        waitsetP = {};
+        waitseqC = <<>>;
+        waitseqP = <<>>;
 
     define {
          isFull == Len(store) = k
          isEmpty == Len(store) = 0
 
-         NoDeadlock == (waitsetC \cup waitsetP) # (c \cup p)
+         NoDeadlock == (Range(waitseqC) \cup Range(waitseqP)) # (c \cup p)
     }
 
-    macro wait(WaitSet) { 
-         WaitSet := WaitSet \cup {self}
+    macro wait(WaitSeq) { 
+         WaitSeq := WaitSeq \o <<self>>
     }
 
-    macro notify(WaitSet) {
-         if (WaitSet # {}) {
-             with ( i \in WaitSet ) {
-                 WaitSet := WaitSet \ {i};
-             }
+    macro notify(WaitSeq) {
+         if (WaitSeq # <<>>) {
+             WaitSeq := Tail(WaitSeq)
          }
     }
 
-    process (producer \in (p \ waitsetP)) {
-         put: while (TRUE) {
+    fair process (producer \in p) {
+         put: if (self \notin Range(waitseqP)) {
                   if (isFull) { 
-                    wait(waitsetP);
+                    wait(waitseqP);
                   } else { 
-                    notify(waitsetC);
+                    notify(waitseqC);
                     store := Append(store, self);
                   };
               };
+              goto put;
     }
 
-    process (consumer \in (c \ waitsetC)) {
-        take: while (TRUE) {
+    fair process (consumer \in c) {
+        take: if (self \notin Range(waitseqC)) {
                  if (isEmpty) {
-                    wait(waitsetC);
+                    wait(waitseqC);
                  } else { 
-                    notify(waitsetP);
+                    notify(waitseqP);
                     store := Tail(store);
                  };
               };
+              goto take;
     }
 } *)
-\* BEGIN TRANSLATION (chksum(pcal) = "7c28162a" /\ chksum(tla) = "d1f78689")
-VARIABLES store, waitsetC, waitsetP
+\* BEGIN TRANSLATION (chksum(pcal) = "d753d008" /\ chksum(tla) = "5e1da1c7")
+VARIABLES store, waitseqC, waitseqP, pc
 
 (* define statement *)
 isFull == Len(store) = k
 isEmpty == Len(store) = 0
 
-NoDeadlock == (waitsetC \cup waitsetP) # (c \cup p)
+NoDeadlock == (Range(waitseqC) \cup Range(waitseqP)) # (c \cup p)
 
 
-vars == << store, waitsetC, waitsetP >>
+vars == << store, waitseqC, waitseqP, pc >>
 
-ProcSet == ((p \ waitsetP)) \cup ((c \ waitsetC))
+ProcSet == (p) \cup (c)
 
 Init == (* Global variables *)
         /\ store = <<>>
-        /\ waitsetC = {}
-        /\ waitsetP = {}
+        /\ waitseqC = <<>>
+        /\ waitseqP = <<>>
+        /\ pc = [self \in ProcSet |-> CASE self \in p -> "put"
+                                        [] self \in c -> "take"]
 
-producer(self) == IF isFull
-                     THEN /\ waitsetP' = (waitsetP \cup {self})
-                          /\ UNCHANGED << store, waitsetC >>
-                     ELSE /\ IF waitsetC # {}
-                                THEN /\ \E i \in waitsetC:
-                                          waitsetC' = waitsetC \ {i}
-                                ELSE /\ TRUE
-                                     /\ UNCHANGED waitsetC
-                          /\ store' = Append(store, self)
-                          /\ UNCHANGED waitsetP
+put(self) == /\ pc[self] = "put"
+             /\ IF self \notin Range(waitseqP)
+                   THEN /\ IF isFull
+                              THEN /\ waitseqP' = waitseqP \o <<self>>
+                                   /\ UNCHANGED << store, waitseqC >>
+                              ELSE /\ IF waitseqC # <<>>
+                                         THEN /\ waitseqC' = Tail(waitseqC)
+                                         ELSE /\ TRUE
+                                              /\ UNCHANGED waitseqC
+                                   /\ store' = Append(store, self)
+                                   /\ UNCHANGED waitseqP
+                   ELSE /\ TRUE
+                        /\ UNCHANGED << store, waitseqC, waitseqP >>
+             /\ pc' = [pc EXCEPT ![self] = "put"]
 
-consumer(self) == IF isEmpty
-                     THEN /\ waitsetC' = (waitsetC \cup {self})
-                          /\ UNCHANGED << store, waitsetP >>
-                     ELSE /\ IF waitsetP # {}
-                                THEN /\ \E i \in waitsetP:
-                                          waitsetP' = waitsetP \ {i}
-                                ELSE /\ TRUE
-                                     /\ UNCHANGED waitsetP
-                          /\ store' = Tail(store)
-                          /\ UNCHANGED waitsetC
+producer(self) == put(self)
 
-Next == (\E self \in (p \ waitsetP): producer(self))
-           \/ (\E self \in (c \ waitsetC): consumer(self))
+take(self) == /\ pc[self] = "take"
+              /\ IF self \notin Range(waitseqC)
+                    THEN /\ IF isEmpty
+                               THEN /\ waitseqC' = waitseqC \o <<self>>
+                                    /\ UNCHANGED << store, waitseqP >>
+                               ELSE /\ IF waitseqP # <<>>
+                                          THEN /\ waitseqP' = Tail(waitseqP)
+                                          ELSE /\ TRUE
+                                               /\ UNCHANGED waitseqP
+                                    /\ store' = Tail(store)
+                                    /\ UNCHANGED waitseqC
+                    ELSE /\ TRUE
+                         /\ UNCHANGED << store, waitseqC, waitseqP >>
+              /\ pc' = [pc EXCEPT ![self] = "take"]
+
+consumer(self) == take(self)
+
+(* Allow infinite stuttering to prevent deadlock on termination. *)
+Terminating == /\ \A self \in ProcSet: pc[self] = "Done"
+               /\ UNCHANGED vars
+
+Next == (\E self \in p: producer(self))
+           \/ (\E self \in c: consumer(self))
+           \/ Terminating
 
 Spec == /\ Init /\ [][Next]_vars
-        /\ WF_vars(Next)
+        /\ \A self \in p : WF_vars(producer(self))
+        /\ \A self \in c : WF_vars(consumer(self))
+
+Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 
 \* END TRANSLATION 
 
