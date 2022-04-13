@@ -1,8 +1,9 @@
 ------------------------- MODULE BlockingQueuePCal -------------------------
 EXTENDS Integers, FiniteSets, Sequences
 
-P == {"p1","p2"}
-C == {"c1"}
+P == {"p1","p2","p3","p4"}
+C == {"c1","c2","c3","c4"}
+K == 3
 
 (* --fair algorithm BlockingQueue {
 
@@ -12,7 +13,7 @@ C == {"c1"}
 
     define {
          isFull ==
-             Len(queue) = 1
+             Len(queue) = K
          isEmpty == 
              Len(queue) = 0
         NeverDeadlock ==
@@ -69,12 +70,12 @@ C == {"c1"}
               };
     }
 } *)
-\* BEGIN TRANSLATION (chksum(pcal) = "7c28162a" /\ chksum(tla) = "76735e74")
+\* BEGIN TRANSLATION (chksum(pcal) = "7c28162a" /\ chksum(tla) = "bb5b3f7a")
 VARIABLES queue, waitset
 
 (* define statement *)
  isFull ==
-     Len(queue) = 1
+     Len(queue) = K
  isEmpty ==
      Len(queue) = 0
 NeverDeadlock ==
