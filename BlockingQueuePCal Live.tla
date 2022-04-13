@@ -1,8 +1,9 @@
-------------------------- MODULE BlockingQueuePCal -------------------------
+ ------------------------- MODULE BlockingQueuePCal -------------------------
 EXTENDS Integers, FiniteSets, Sequences
 
-P == {"p1","p2"}
-C == {"c1"}
+K == 3
+P == {"p1","p2","p3","p4"}
+C == {"c1", "c2", "c3"}
 
 (* --fair algorithm BlockingQueue {
 
@@ -12,11 +13,11 @@ C == {"c1"}
 
     define {
          isFull ==
-             Len(queue) = 1
+             Len(queue) = K
          isEmpty == 
              Len(queue) = 0
         NeverDeadlock ==
-            waitset # P \cup C
+            waitset # P \union C
     }
 
     macro wait() { 
@@ -30,12 +31,7 @@ C == {"c1"}
             with (w \in waitset) {
                 waitset := waitset \ {w};
             }
-        }
-    }
-
-    macro notifyAll() {
-        \* Instrinsic \*
-        waitset := {};
+        };
     }
 
     macro notifyOther(O) {
@@ -44,7 +40,7 @@ C == {"c1"}
             with (w \in waitset \cap O) {
                 waitset := waitset \ {w};
             }
-        }
+        };
     }
 
     process (producer \in P) {
@@ -52,7 +48,7 @@ C == {"c1"}
                   if (isFull) { 
                     wait();
                   } else { 
-                    notify();
+                    notifyOther(C);
                     queue := Append(queue, self);
                   };
               };
@@ -63,22 +59,22 @@ C == {"c1"}
                  if (isEmpty) {
                     wait();
                  } else { 
-                    notify();
+                    notifyOther(P);
                     queue := Tail(queue);
                  };
               };
     }
 } *)
-\* BEGIN TRANSLATION (chksum(pcal) = "7c28162a" /\ chksum(tla) = "76735e74")
+\* BEGIN TRANSLATION (chksum(pcal) = "7c28162a" /\ chksum(tla) = "ce51f923")
 VARIABLES queue, waitset
 
 (* define statement *)
  isFull ==
-     Len(queue) = 1
+     Len(queue) = K
  isEmpty ==
      Len(queue) = 0
 NeverDeadlock ==
-    waitset # P \cup C
+    waitset # P \union C
 
 
 vars == << queue, waitset >>
@@ -92,8 +88,8 @@ Init == (* Global variables *)
 producer(self) == IF isFull
                      THEN /\ waitset' = (waitset \union {self})
                           /\ queue' = queue
-                     ELSE /\ IF waitset # {}
-                                THEN /\ \E w \in waitset:
+                     ELSE /\ IF waitset # {} \cap C
+                                THEN /\ \E w \in waitset \cap C:
                                           waitset' = waitset \ {w}
                                 ELSE /\ TRUE
                                      /\ UNCHANGED waitset
@@ -102,8 +98,8 @@ producer(self) == IF isFull
 consumer(self) == IF isEmpty
                      THEN /\ waitset' = (waitset \union {self})
                           /\ queue' = queue
-                     ELSE /\ IF waitset # {}
-                                THEN /\ \E w \in waitset:
+                     ELSE /\ IF waitset # {} \cap P
+                                THEN /\ \E w \in waitset \cap P:
                                           waitset' = waitset \ {w}
                                 ELSE /\ TRUE
                                      /\ UNCHANGED waitset
@@ -117,7 +113,7 @@ Spec == /\ Init /\ [][Next]_vars
 
 \* END TRANSLATION 
 
-NeverStarve ==
+NoStarvation ==
     \forall p \in P: []<>(<<producer(p)>>_vars)
 =============================================================================
 
