@@ -1,8 +1,12 @@
 --------------------------- MODULE BlockingQueue ---------------------------
-EXTENDS Naturals, Sequences, FiniteSets
+EXTENDS Naturals, Sequences, FiniteSets, Apalache
 
-CONSTANTS Producers,   (* the (nonempty) set of producers                       *)
+CONSTANTS 
+          \* @type: Set(Str);
+          Producers,   (* the (nonempty) set of producers                       *)
+          \* @type: Set(Str);
           Consumers,   (* the (nonempty) set of consumers                       *)
+          \* @type: Int;
           BufCapacity  (* the maximum number of messages in the bounded buffer  *)
 
 ASSUME Assumption ==
@@ -10,17 +14,26 @@ ASSUME Assumption ==
        /\ Consumers # {}                      (* at least one consumer *)
        /\ Producers \intersect Consumers = {} (* no thread is both consumer and producer *)
        /\ BufCapacity \in (Nat \ {0})         (* buffer capacity is at least 1 *)
-       
+
+\* Apalache's constant initializer feature (--cinit=ConstInit on the command line)
+ConstInit ==
+  /\ Producers \in ((SUBSET {"p1","p2","p3","p4"}) \ {{}})
+  /\ Consumers \in ((SUBSET {"c1","c2","c3","c4"}) \ {{}})
+  /\ BufCapacity \in 1..3       
 -----------------------------------------------------------------------------
 
-VARIABLES buffer, waitSet
+VARIABLES
+    \* @type: Seq(Str);
+    buffer,
+    \* @type: Set(Str);
+    waitSet
 vars == <<buffer, waitSet>>
 
 RunningThreads == (Producers \cup Consumers) \ waitSet
 
 NotifyOther(Others) == 
     IF waitSet \cap Others # {}
-    THEN \E t \in waitSet \cap Others : waitSet' = waitSet \ {t}
+    THEN \E t \in waitSet \cap Others: waitSet' = waitSet \ {t}
     ELSE UNCHANGED waitSet
 
 (* @see java.lang.Object#wait *)
@@ -92,8 +105,8 @@ LEMMA TypeCorrect == Spec => []TypeInv
 
 \* The naive thing to do is to check if the conjunct of TypeInv /\ Invariant
 \* is inductive.
-IInv == /\ TypeInv!2
-        /\ TypeInv!3
+IInv == /\ Len(buffer) \in 0..BufCapacity   \* https://github.com/informalsystems/apalache/issues/876
+        /\ waitSet \in SUBSET (Producers \cup Consumers)
         /\ Invariant
         \* When the buffer is empty, a consumer will be added to the waitSet.
         \* However, this does not crate a deadlock, because at least one producer
@@ -109,8 +122,17 @@ THEOREM DeadlockFreedom == Spec => []Invariant
 <1>3. IInv => Invariant  BY DEF IInv
 <1>4. QED BY <1>1,<1>2,<1>3,PTL
 
-MCIInv == TypeInv!1 /\ IInv
+MCIInv == buffer \in Seq(Producers) /\ IInv
 
+\* Validate inductive invariant with Apalache (version 0.25.5):
+\* $ apalache-mc check --cinit=ConstInit --inv=IInv --init=APIInv --next=Next --length=2 BlockingQueue.tla
+APIInv ==
+    /\ LET 
+        \* @type: Seq(Str);
+        s == Gen(10) IN
+        /\ \A i \in DOMAIN s: s[i] \in Producers
+        /\ buffer = s
+    /\ IInv
 -----------------------------------------------------------------------------
 
 PutEnabled == \A p \in Producers : ENABLED Put(p, p)
