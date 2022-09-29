@@ -25,3 +25,5 @@ detailed.log
 
 ## Ignore tools installed into the workspace
 tools/
+
+_apalache_out/

@@ -1,9 +1,13 @@
 --------------------------- MODULE BlockingQueue ---------------------------
 EXTENDS Naturals, Sequences, FiniteSets
 
-CONSTANTS Producers,   (* the (nonempty) set of producers                       *)
-          Consumers,   (* the (nonempty) set of consumers                       *)
-          BufCapacity  (* the maximum number of messages in the bounded buffer  *)
+CONSTANTS 
+    \* @type: Set(Str);
+    Producers,   (* the (nonempty) set of producers                       *)
+    \* @type: Set(Str);
+    Consumers,   (* the (nonempty) set of consumers                       *)
+    \* @type: Int;
+    BufCapacity  (* the maximum number of messages in the bounded buffer  *)
 
 ASSUME Assumption ==
        /\ Producers # {}                      (* at least one producer *)
@@ -13,7 +17,11 @@ ASSUME Assumption ==
        
 -----------------------------------------------------------------------------
 
-VARIABLES buffer, waitSet
+VARIABLES 
+    \* @type: Seq(Str);
+    buffer, 
+    \* @type: Set(Str);
+    waitSet
 vars == <<buffer, waitSet>>
 
 RunningThreads == (Producers \cup Consumers) \ waitSet
@@ -89,27 +97,6 @@ LEMMA TypeCorrect == Spec => []TypeInv
 <1>1. Init => TypeInv BY SMT 
 <1>2. TypeInv /\ [Next]_vars => TypeInv' BY SMT 
 <1>. QED BY <1>1, <1>2, PTL
-
-\* The naive thing to do is to check if the conjunct of TypeInv /\ Invariant
-\* is inductive.
-IInv == /\ TypeInv!2
-        /\ TypeInv!3
-        /\ Invariant
-        \* When the buffer is empty, a consumer will be added to the waitSet.
-        \* However, this does not crate a deadlock, because at least one producer
-        \* will not be in the waitSet.
-        /\ buffer = <<>> => \E p \in Producers : p \notin waitSet
-        \* Vice versa, when buffer is full, a producer will be added to waitSet,
-        \* but at least one consumer won't be in waitSet.
-        /\ Len(buffer) = BufCapacity => \E c \in Consumers : c \notin waitSet
-
-THEOREM DeadlockFreedom == Spec => []Invariant
-<1>1. Init => IInv BY SMT DEF IInv
-<1>2. IInv /\ [Next]_vars => IInv' BY DEF IInv
-<1>3. IInv => Invariant  BY DEF IInv
-<1>4. QED BY <1>1,<1>2,<1>3,PTL
-
-MCIInv == TypeInv!1 /\ IInv
 
 -----------------------------------------------------------------------------
 
