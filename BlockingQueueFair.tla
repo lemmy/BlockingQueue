@@ -39,7 +39,8 @@ NotifyOther(ws) ==
             \/ /\ ws = <<>>
                /\ UNCHANGED ws
             \/ /\ ws # <<>>
-               /\ ws' = Tail(ws)
+               \* Front instead of Tail introduces a liveness bug.
+               /\ ws' = Front(ws)                  
 
 (* @see java.lang.Object#wait *)
 Wait(ws, t) == 

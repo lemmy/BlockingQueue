@@ -1,6 +1,6 @@
 -------------------------- MODULE BlockingQueueFair_SpecImpliesBQSSpec --------------------------
 
-EXTENDS Integers, Sequences, FiniteSets, TLC
+EXTENDS Integers, Sequences, FiniteSets, TLC, SequencesExt
 
 VARIABLE
   (*
@@ -223,7 +223,7 @@ Next ==
           /\ ((Len(buffer) < BufCapacity
               /\ buffer' = Append(buffer, p1)
               /\ ((waitSeqC = <<>> /\ waitSeqC' = waitSeqC)
-                \/ (waitSeqC /= <<>> /\ waitSeqC' = Tail(waitSeqC)))
+                \/ (waitSeqC /= <<>> /\ waitSeqC' = Front(waitSeqC)))
               /\ waitSeqP' = waitSeqP)
             \/ (Len(buffer) = BufCapacity
               /\ waitSeqP' = Append(waitSeqP, p1)
@@ -239,7 +239,7 @@ Next ==
           /\ ((buffer /= <<>>
               /\ buffer' = Tail(buffer)
               /\ ((waitSeqP = <<>> /\ waitSeqP' = waitSeqP)
-                \/ (waitSeqP /= <<>> /\ waitSeqP' = Tail(waitSeqP)))
+                \/ (waitSeqP /= <<>> /\ waitSeqP' = Front(waitSeqP)))
               /\ waitSeqC' = waitSeqC)
             \/ (buffer = <<>>
               /\ waitSeqC' = Append(waitSeqC, c1)
@@ -278,7 +278,7 @@ Next ==
               /\ ((Len(buffer) < BufCapacity
                   /\ buffer' = Append(buffer, p15)
                   /\ ((waitSeqC = <<>> /\ waitSeqC' = waitSeqC)
-                    \/ (waitSeqC /= <<>> /\ waitSeqC' = Tail(waitSeqC)))
+                    \/ (waitSeqC /= <<>> /\ waitSeqC' = Front(waitSeqC)))
                   /\ waitSeqP' = waitSeqP)
                 \/ (Len(buffer) = BufCapacity
                   /\ waitSeqP' = Append(waitSeqP, p15)
@@ -299,7 +299,7 @@ Next ==
               /\ ((buffer /= <<>>
                   /\ buffer' = Tail(buffer)
                   /\ ((waitSeqP = <<>> /\ waitSeqP' = waitSeqP)
-                    \/ (waitSeqP /= <<>> /\ waitSeqP' = Tail(waitSeqP)))
+                    \/ (waitSeqP /= <<>> /\ waitSeqP' = Front(waitSeqP)))
                   /\ waitSeqC' = waitSeqC)
                 \/ (buffer = <<>>
                   /\ waitSeqC' = Append(waitSeqC, c14)
@@ -325,7 +325,7 @@ Next ==
               /\ ((Len(buffer) < BufCapacity
                   /\ buffer' = Append(buffer, p15)
                   /\ ((waitSeqC = <<>> /\ waitSeqC' = waitSeqC)
-                    \/ (waitSeqC /= <<>> /\ waitSeqC' = Tail(waitSeqC)))
+                    \/ (waitSeqC /= <<>> /\ waitSeqC' = Front(waitSeqC)))
                   /\ waitSeqP' = waitSeqP)
                 \/ (Len(buffer) = BufCapacity
                   /\ waitSeqP' = Append(waitSeqP, p15)
@@ -346,7 +346,7 @@ Next ==
               /\ ((buffer /= <<>>
                   /\ buffer' = Tail(buffer)
                   /\ ((waitSeqP = <<>> /\ waitSeqP' = waitSeqP)
-                    \/ (waitSeqP /= <<>> /\ waitSeqP' = Tail(waitSeqP)))
+                    \/ (waitSeqP /= <<>> /\ waitSeqP' = Front(waitSeqP)))
                   /\ waitSeqC' = waitSeqC)
                 \/ (buffer = <<>>
                   /\ waitSeqC' = Append(waitSeqC, c14)
