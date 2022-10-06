@@ -13,6 +13,16 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v08b (trace): Check configurations up to 20 processes and buffer capacity 10.
+
+The state-space reduction due to the introduction of the view in the previous commits, allows TLC to check the spec for larger configurations, with which we can infer the error-trace length.
+
+```bash
+java -jar /opt/TLA+Toolbox/tla2tools.jar -deadlock -note SimBlockingQueue
+```
+
+![SimBlockingQueue](./R/SimBlockingQueue.svg)
+
 ### v08a (view): Define a view that abstracts buffer into a counter.
 
 We exploit the insight that the order of elements in the (fifo) buffer is irrelevant for the correctness of the algorithm.  In other words, we can abstract the buffer into a simple counter of elements.  With this abstraction, the state-space for the current config shrinks from 2940 to 1797 distinct states. 
