@@ -75,4 +75,5 @@ Invariant == IF waitSet # (producers \cup consumers)
 (* The Permutations operator is defined in the TLC module. *)
 Sym == Permutations(Producers) \union Permutations(Consumers)
 
+View == <<Len(buffer), waitSet, producers, consumers, bufCapacity>>
 =============================================================================
