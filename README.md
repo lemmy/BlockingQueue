@@ -13,6 +13,10 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v08a (view): Define a view that abstracts buffer into a counter.
+
+We exploit the insight that the order of elements in the (fifo) buffer is irrelevant for the correctness of the algorithm.  In other words, we can abstract the buffer into a simple counter of elements.  With this abstraction, the state-space for the current config shrinks from 2940 to 1797 distinct states. 
+
 ### v08 (continue): Infer inequation under which the system is deadlock free.
 
 Based on the scaffolding in the two previous steps, we run TLC with the [```-continue```](https://lamport.azurewebsites.net/tla/tlc-options.html?back-link=tools.html) option to not stop state space exploration after a violation of the invariant has been found.  In other words, we ask TLC to find all violations, not just one of the shortest ones (Breadth-First search guarantees that TLC finds the shortest counterexample first).
