@@ -52,9 +52,11 @@ Get(t) ==
 
 -----------------------------------------------------------------------------
 
-TypeInv == /\ Len(buffer) \in 0..BufCapacity
-           /\ waitSetP \in SUBSET Producers
-           /\ waitSetC \in SUBSET Consumers
+TypeInv ==
+   /\ buffer \in Seq(Producers) 
+   /\ Len(buffer) \in 0..BufCapacity
+   /\ waitSetP \in SUBSET Producers
+   /\ waitSetC \in SUBSET Consumers
 
 (* Initially, the buffer is empty and no thread is waiting. *)
 Init == /\ buffer = <<>>
@@ -85,19 +87,19 @@ INSTANCE TLAPS
 LEMMA ITypeInv == Spec => []TypeInv
 <1> USE Assumption DEF TypeInv
 <1>1. Init => TypeInv
-  BY SMT DEF Init
+  BY DEF Init
 <1>2. TypeInv /\ [Next]_vars => TypeInv'
-  BY SMT DEF Next, vars, Put, Get, Wait, NotifyOther
+  BY DEF Next, vars, Put, Get, Wait, NotifyOther
 <1>3. QED
   BY <1>1, <1>2, PTL DEF Spec
 
 THEOREM Implements == Spec => A!Spec
 <1> USE Assumption, A!Assumption
 <1>1. Init => A!Init 
-   BY Isa DEF Init, A!Init
+   BY DEF Init, A!Init
 <1>2. TypeInv /\ [Next]_vars => [A!Next]_A!vars
-   BY SMT DEF TypeInv, Next, vars, Put, Get, Wait, NotifyOther, A!Next, 
-          A!vars, A!Put, A!Get, A!Wait, A!NotifyOther
+   BY DEF TypeInv, Next, vars, Put, Get, Wait, NotifyOther, A!Next, 
+          A!vars, A!Put, A!Get, A!Wait, A!NotifyOther, A!RunningThreads
 <1>3. QED BY <1>1, <1>2, PTL, ITypeInv DEF Spec, A!Spec
 
 =============================================================================
