@@ -18,7 +18,7 @@ jobs:
     - name: Install TLAPS
       run: tar -xzf tlapm-1.6.0-pre-x86_64-linux-gnu.tar.gz
     - name: Run TLAPS
-      run: tlapm/bin/tlapm --cleanfp -I CommunityModules/ BlockingQueue.tla BlockingQueueSplit.tla BlockingQueueFair.tla
+      run: tlapm/bin/tlapm --cleanfp -I CommunityModules/ BlockingQueue.tla BlockingQueueSplit.tla BlockingQueueFair.tla BlockingQueuePoisonApple_proofs.tla
     - name: Get (nightly) TLC
       run: wget https://nightly.tlapl.us/dist/tla2tools.jar
     - name: Run TLC

@@ -13,6 +13,12 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v38 (Termination): Prove termination of the BlockingQueuePoisonApple spec.
+
+A TLAPS proof of all safety properties of `BlockingQueuePoisonApple`, including its termination property: every consumer eventually dies after eating `M` Poison Apple slices, where `M` is the number of producers.  The proof lives in a separate `BlockingQueuePoisonApple_proofs.tla` module so the main spec stays free of TLAPS-specific declarations.
+
+Notably, [Claude Opus 4.7](https://www.anthropic.com/) and I together found the inductive invariant and built the entire proof in mere hours.  Compare this to the v33 refinement proof (pre-AI), which took roughly three weeks of manual labour to find the right invariants and to nudge the back-end provers across the finish line.  Beyond the obvious productivity gain, the AI was particularly useful for proposing candidate invariants, splitting goals into the right intermediate lemmas, and recalling the exact CommunityModules / TLAPS standard-library theorems (`AppendProperties`, `HeadTailProperties`, `FS_CardinalityType`, the `SumFunction` lemmas, ...) needed at each step.
+
 ### v37 (Termination): Gradually terminate Consumers when Producers shutdown by sending Poison Apples.
 
 Poison Pill variant where each producer sends `N` slices of a Poison Apple to `N` consumers. A consumer dies (terminates) when it has eaten `M` apple slices, where `M` is the number of producers.
