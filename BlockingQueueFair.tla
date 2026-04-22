@@ -1,5 +1,5 @@
 ------------------------- MODULE BlockingQueueFair -------------------------
-EXTENDS Naturals, Sequences, FiniteSets, Functions, SequencesExt, SequencesExtTheorems
+EXTENDS Naturals, Sequences, FiniteSets, Functions, SequencesExt, SequenceTheorems
 
 CONSTANTS Producers,   (* the (nonempty) set of producers                       *)
           Consumers,   (* the (nonempty) set of consumers                       *)
@@ -85,7 +85,8 @@ BQSStarvation == BQS!A!Starvation
 THEOREM FairSpec => BQSStarvation
 -----------------------------------------------------------------------------
 
-TypeInv == /\ Len(buffer) \in 0..BufCapacity
+TypeInv == /\ buffer \in Seq(Producers)
+           /\ Len(buffer) \in 0..BufCapacity
            \* Producers
            /\ waitSeqP \in Seq(Producers)
            /\ IsInjective(waitSeqP) \* no duplicates (thread is either asleep or not)!
@@ -112,13 +113,13 @@ THEOREM ITypeInv == Spec => []TypeInv
                /\ buffer' = Append(buffer, p)
                /\ NotifyOther(waitSeqC)
                /\ UNCHANGED waitSeqP
-      BY <3>1, <2>1, TailTransitivityIsInjective
+      BY <3>1, <2>1, TailInjectiveSeq
       DEF NotifyOther, IsInjective
     <3>2. CASE /\ Len(buffer) = BufCapacity
                /\ Wait(waitSeqP, p)
                /\ UNCHANGED waitSeqC
       \* Put below so TLAPS knows about t \notin Range(waitSeqP)
-      BY <3>2, <2>1, AppendTransitivityIsInjective
+      BY <3>2, <2>1, AppendInjectiveSeq
       DEF Wait, IsInjective, Put
     <3>3. QED
       BY <2>1, <3>1, <3>2 DEF Put
@@ -129,13 +130,13 @@ THEOREM ITypeInv == Spec => []TypeInv
                /\ buffer' = Tail(buffer)
                /\ NotifyOther(waitSeqP)
                /\ UNCHANGED waitSeqC
-      BY <3>1, <2>2, TailTransitivityIsInjective
+      BY <3>1, <2>2, TailInjectiveSeq, HeadTailProperties
       DEF NotifyOther, IsInjective
     <3>2. CASE /\ buffer = <<>>
                /\ Wait(waitSeqC, c)
                /\ UNCHANGED waitSeqP
       \* Get below so TLAPS knows about t \notin Range(waitSeqC)
-      BY <3>2, <2>2, AppendTransitivityIsInjective
+      BY <3>2, <2>2, AppendInjectiveSeq
       DEF Wait, IsInjective, Get
     <3>3. QED
       BY <2>2, <3>1, <3>2 DEF Get
@@ -193,8 +194,14 @@ THEOREM Spec => BQS!Spec
     <3>2. CASE /\ Len(buffer) = BufCapacity
                /\ Wait(waitSeqP, p)
                /\ UNCHANGED waitSeqC
-      BY <2>1, <3>2
-      DEF Wait, BQS!Next, BQS!vars, BQS!Put, BQS!Wait
+      <4>1. waitSeqP \in Seq(Producers) /\ waitSeqP' = Append(waitSeqP, p)
+        BY <3>2 DEF Wait, TypeInv
+      <4>2. Range(Append(waitSeqP, p)) = Range(waitSeqP) \cup {p}
+        BY <4>1, AppendProperties
+      <4>3. BQS!Put(p, p)
+        BY <2>1, <3>2, <4>1, <4>2 DEF Put, Wait, BQS!Put, BQS!Wait
+      <4>. QED
+        BY <2>1, <3>2, <4>3 DEF BQS!Next, BQS!vars, Wait
     <3>3. QED
       BY <2>1, <3>1, <3>2 DEF Put
   <2>2. ASSUME NEW c \in Consumers,
@@ -217,7 +224,14 @@ THEOREM Spec => BQS!Spec
     <3>2. CASE /\ buffer = <<>>
                /\ Wait(waitSeqC, c)
                /\ UNCHANGED waitSeqP
-      BY <2>2, <3>2 DEF Wait, BQS!Next, BQS!vars, BQS!Get, BQS!Wait
+      <4>1. waitSeqC \in Seq(Consumers) /\ waitSeqC' = Append(waitSeqC, c)
+        BY <3>2 DEF Wait, TypeInv
+      <4>2. Range(Append(waitSeqC, c)) = Range(waitSeqC) \cup {c}
+        BY <4>1, AppendProperties
+      <4>3. BQS!Get(c)
+        BY <2>2, <3>2, <4>1, <4>2 DEF Get, Wait, BQS!Get, BQS!Wait
+      <4>. QED
+        BY <2>2, <3>2, <4>3 DEF BQS!Next, BQS!vars, Wait
     <3>3. QED
       BY <2>2, <3>1, <3>2 DEF Get
   <2>3. CASE UNCHANGED vars
