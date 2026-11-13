@@ -3,10 +3,6 @@ package org.kuppe;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.kuppe.App2TLA.BufferDeqEvent;
-import org.kuppe.App2TLA.BufferEnqEvent;
-import org.kuppe.App2TLA.BufferWaitEvent;
-
 public final class BlockingQueue<E> {
 
 	private final E[] store;
@@ -40,15 +36,11 @@ public final class BlockingQueue<E> {
 		lock.lock();
 		try {
 			while (isFull()) {
-				new BufferWaitEvent("p").commit();
-				System.out.println("Buffer full; P waits");
 				waitP.await();
-				System.out.println("P notified");
 			}
 			waitC.signal();
 
 			// Add e and do bookkeeping.
-			new BufferEnqEvent().commit();
 			append(e);
 		} finally {
 			lock.unlock();
@@ -62,23 +54,19 @@ public final class BlockingQueue<E> {
 	 * @see {@link BlockingQueue#put(Object)}.
 	 */
 	public E take() throws InterruptedException {
-        final ReentrantLock lock = this.lock;
-        lock.lock();
-        try {
-    		while (isEmpty()) {
-    			new BufferWaitEvent("c").commit();
-    			System.out.println("Buffer empty; C waits");
-    			waitC.await();
-    			System.out.println("C notified");
-    		}
-    		waitP.signal();
-    		
-    		// Remove e and do bookkeeping.
-    		new BufferDeqEvent().commit();
-    		return head();
-        } finally {
-            lock.unlock();
-        }
+		final ReentrantLock lock = this.lock;
+		lock.lock();
+		try {
+			while (isEmpty()) {
+				waitC.await();
+			}
+			waitP.signal();
+
+			// Remove e and do bookkeeping.
+			return head();
+		} finally {
+			lock.unlock();
+		}
 	}
 	
 	

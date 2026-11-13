@@ -13,6 +13,50 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v40 (JPF): Verify Java executions with Java PathFinder.
+
+The earlier trace-validation chapters sampled executions using the operating
+system's scheduler. [Java PathFinder (JPF)](https://github.com/javapathfinder/jpf-core)
+instead explores scheduling choices directly in the Java implementation, checking
+for deadlocks, uncaught exceptions, and assertion failures.
+
+First, remove the JFR events and console wait logging from
+[BlockingQueue.java](impl/src/org/kuppe/BlockingQueue.java). The instrumentation
+used in v19–v21 remains available in those earlier tutorial commits. Compile the
+cleaned implementation together with a small
+[workload](impl/jpf/src/org/kuppe/jpf/BlockingQueueWorkload.java): two producers,
+two consumers, capacity one, and one operation per thread. Each producer puts its
+name; each consumer asserts that its returned value is non-null. The main thread
+joins all workers. Unlike `App`, this workload is finite and has no random sleeps.
+
+Run these commands from the repository root with Java **11**. The example
+includes JPF 8's runtime, modeled classes, and defaults under `impl/jpf/`.
+
+```sh
+export JAVA_HOME=/path/to/jdk-11
+export PATH="$JAVA_HOME/bin:$PATH"
+
+mkdir -p build/jpf/classes
+javac --release 11 -g -d build/jpf/classes \
+  impl/src/org/kuppe/BlockingQueue.java \
+  impl/jpf/src/org/kuppe/jpf/BlockingQueueWorkload.java
+
+java -Xmx2g -cp impl/jpf/lib/jpf.jar gov.nasa.jpf.JPF \
+  +site=impl/jpf/jpf.properties \
+  +classpath="$PWD/build/jpf/classes" \
+  impl/jpf/BlockingQueue.jpf
+```
+
+The bundled defaults locate `impl/jpf/lib/jpf-classes.jar`. See
+[the dependency notes](impl/jpf/lib/README.md) for the pinned version and license.
+
+The [configuration](impl/jpf/BlockingQueue.jpf) enables the checks explicitly and
+uses depth-first search with state matching, the ordinary scheduler, and no search
+limit. A completed run should report `no errors detected` and `constraints=0`.
+This verifies the configured workload under JPF's scheduling reductions and state
+matching; it does not establish arbitrary inputs, capacities, spurious wakeups,
+interrupt handling, or starvation freedom.
+
 ### v39 (Statistics): Sweep (P,C,B) configurations to measure consumer over- and under-provisioning of BlockingQueuePoisonApple.
 
 A first pass at collecting empirical statistics from `BlockingQueuePoisonApple` and turning them into plots, in three pieces:
