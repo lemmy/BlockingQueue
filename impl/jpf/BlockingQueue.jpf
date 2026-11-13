@@ -1,0 +1,15 @@
+# Supply bundled defaults with +site=impl/jpf/jpf.properties and compiled classes with +classpath.
+target = org.kuppe.jpf.BlockingQueueWorkload
+
+# Check the finite workload for deadlocks, uncaught exceptions, and assertions.
+search.properties = gov.nasa.jpf.vm.NotDeadlockedProperty,gov.nasa.jpf.vm.NoUncaughtExceptionsProperty
+vm.enable_assertions = org.kuppe.jpf.*
+
+# Explore scheduling choices to exhaustion, with state matching and no bounds.
+search.class = gov.nasa.jpf.search.DFSearch
+vm.storage.class = gov.nasa.jpf.vm.JenkinsStateSet
+vm.scheduler.sync.class = gov.nasa.jpf.vm.AllRunnablesSyncPolicy
+vm.shared.break_on_exposure = false
+
+report.console.finished = result,statistics
+report.probe_interval = 30

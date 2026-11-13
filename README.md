@@ -13,6 +13,45 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v40 (JPF): Verify Java executions with Java PathFinder.
+
+Where v19–v21 rely on executions that happen to be logged during testing, JPF
+systematically explores alternative thread schedules for a chosen workload.
+This exposes rare interleavings without depending on long stress runs or
+favorable timing, and makes failures reproducible. Listeners observe public API
+calls and internal operations without adding application logging, while TLC
+checks the resulting execution prefixes against the same TLA+ specification.
+Coverage remains bounded by the workload, observations, and JPF’s execution
+model and search reductions.
+
+[Java PathFinder (JPF)](https://github.com/javapathfinder/jpf-core) explores thread
+schedules in the Java implementation. With JFR and console logging removed, a
+finite [workload](impl/jpf/src/org/kuppe/jpf/BlockingQueueWorkload.java) exercises
+the [queue](impl/src/org/kuppe/BlockingQueue.java): two producers, two consumers,
+capacity one, and one operation per thread.
+
+From the repository root, use Java **11** and the bundled
+[JPF dependencies](impl/jpf/lib/):
+
+```sh
+export JAVA_HOME=/path/to/jdk-11
+export PATH="$JAVA_HOME/bin:$PATH"
+
+mkdir -p build/jpf/classes
+javac --release 11 -g -d build/jpf/classes \
+  impl/src/org/kuppe/BlockingQueue.java \
+  impl/jpf/src/org/kuppe/jpf/BlockingQueueWorkload.java
+
+java -Xmx2g -cp impl/jpf/lib/jpf.jar gov.nasa.jpf.JPF \
+  +site=impl/jpf/jpf.properties \
+  +classpath="$PWD/build/jpf/classes" \
+  impl/jpf/BlockingQueue.jpf
+```
+
+Expect `no errors detected` and `constraints=0`. This checks deadlocks,
+exceptions, and assertions for this workload; the following steps compare its
+observations with the TLA+ specification.
+
 ### v39 (Statistics): Sweep (P,C,B) configurations to measure consumer over- and under-provisioning of BlockingQueuePoisonApple.
 
 A first pass at collecting empirical statistics from `BlockingQueuePoisonApple` and turning them into plots, in three pieces:
