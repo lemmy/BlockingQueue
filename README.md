@@ -13,6 +13,93 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v41 (Traces): Log Java executions with a JPF listener.
+
+JPF can also observe the executions it explores. A
+[listener](impl/jpf/src/org/kuppe/jpf/BlockingQueueListener.java) records queue
+operations without adding logging calls or trace variables to the implementation.
+It uses method callbacks at these boundaries:
+
+| Observation | Boundary |
+| --- | --- |
+| `put` | Normal return from `append(e)` |
+| `take.p1` / `take.p2` | Normal return from `head()`, retaining the returned producer name |
+| `wait` | Entry to `ConditionObject.await()` inside `put` or `take` |
+| `resume` | Normal return from `await()`, after lock reacquisition |
+
+The queue's lock prevents other queue operations from interleaving between
+signaling and the corresponding append/removal. Method callbacks avoid duplicate
+observations when JPF reexecutes an instruction after a scheduling choice. The
+listener inspects the current stack to identify queue calls; it keeps no separate
+per-thread observer state.
+
+Logging every callback to one flat file would concatenate different executions
+as JPF backtracks. Instead,
+[TraceRecorder](impl/jpf/src/org/kuppe/jpf/TraceRecorder.java) collects a shared
+prefix tree outside JPF's program state.
+It saves the current prefix at each DFS depth and restores it on backtracking.
+Equal `(parent, thread, action)` edges share a node. Prefixes ending at matched
+states are retained even though the Java execution has not terminated.
+
+With Java **11**, run these commands from the repository root. The JPF runtime
+and defaults are included under `impl/jpf/`. Compile the workload and listener
+separately: the listener runs in the host JVM; only the workload and queue belong
+on JPF's modeled classpath.
+
+```sh
+export JAVA_HOME=/path/to/jdk-11
+export PATH="$JAVA_HOME/bin:$PATH"
+
+mkdir -p build/jpf/classes build/jpf/listener-classes
+rm -f build/jpf/nodes.tsv
+javac --release 11 -g -d build/jpf/classes \
+  impl/src/org/kuppe/BlockingQueue.java \
+  impl/jpf/src/org/kuppe/jpf/BlockingQueueWorkload.java
+javac --release 11 -g -cp impl/jpf/lib/jpf.jar -d build/jpf/listener-classes \
+  impl/jpf/src/org/kuppe/jpf/TraceRecorder.java \
+  impl/jpf/src/org/kuppe/jpf/BlockingQueueListener.java
+
+java -Xmx2g -Dblockingqueue.jpf.nodes=build/jpf/nodes.tsv \
+  -cp "build/jpf/listener-classes:impl/jpf/lib/jpf.jar" gov.nasa.jpf.JPF \
+  +site=impl/jpf/jpf.properties \
+  +classpath="$PWD/build/jpf/classes" \
+  +listener=org.kuppe.jpf.BlockingQueueListener \
+  impl/jpf/BlockingQueue.jpf
+
+head build/jpf/nodes.tsv
+```
+
+The TSV header is `parent<TAB>thread<TAB>action`. Each following row defines a
+child node, numbered from one; node zero is the empty history. Follow a node's
+parent links back to zero to reconstruct its observation prefix. This records
+event labels, thread identities, and returned producer names, rather than queue
+heap snapshots or every Java instruction.
+
+TSV avoids CSV quoting rules if a thread name or action contains a comma. The
+recorder rejects tabs and newlines in fields, allowing simple splitting on tabs.
+
+For the supplied workload, a run recorded 152 prefixes. Its first rows were:
+
+```text
+parent	thread	action
+0	p1	put
+1	p2	wait
+2	c1	take.p1
+3	p2	resume
+4	p2	put
+5	c2	take.p2
+3	c2	wait
+```
+
+The two rows with parent `3` represent alternative continuations after `c1`
+removes `p1`'s value: either `p2` resumes or `c2` waits on the empty queue.
+
+The recorder exports only after a completed, error-free, unconstrained
+depth-first search. A failed or limited search must not leave a fresh tree, so
+the commands remove stale output before starting. The workload, scheduling
+reductions, and state-matching limits from v40 still apply. These observations
+will be input to later trace validation; this step collects them only.
+
 ### v40 (JPF): Verify Java executions with Java PathFinder.
 
 The earlier trace-validation chapters sampled executions using the operating
