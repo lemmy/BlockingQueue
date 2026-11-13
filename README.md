@@ -13,6 +13,95 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v42 (Traces): Validate JPF execution prefixes against the specification.
+
+The listener from v41 records what the Java queue does. Now TLC checks whether
+those observations can be explained by the existing
+[BlockingQueueSplit](BlockingQueueSplit.tla) specification.
+[BlockingQueueJpfData](impl/jpf/src/BlockingQueueJpfData.java) reads `nodes.tsv`
+and overrides three operators in [its TLA+ module](BlockingQueueJpfData.tla):
+`JpfNodeCount`, `JpfChildren(node)`, and `JpfEvent(node)`. The Java code supplies
+tree data only; queue transitions are still defined in TLA+.
+
+[BlockingQueueJpfTrace](BlockingQueueJpfTrace.tla) extends `BlockingQueueSplit`
+with a cursor `node`, initially zero. Each step chooses a recorded child, matches
+its observation to an enabled specification action, and advances the cursor:
+
+| Observation | Matching specification action |
+| --- | --- |
+| `put` by producer `p` | `Put(p, p)` with space in the buffer |
+| `take.p1` / `take.p2` by consumer `c` | `Get(c)`, requiring the recorded value at `Head(buffer)` |
+| `wait` | The full-buffer branch of `Put`, or empty-buffer branch of `Get` |
+| `resume` | Stuttering, requiring the thread outside the abstract wait sets |
+
+As in the earlier trace-validation examples, non-determinism fills gaps in the
+log: `signal()` does not identify its chosen waiter in our observations. The
+specification chooses one, constrained by later resumes. Java signals before
+appending/removing under the same lock; no other queue observation can intervene,
+so the adapter combines these effects in the specification's `Put`/`Get` action.
+
+An impossible observation disables its replay branch. With deadlock checking
+disabled for finite endpoints, TLC could otherwise finish successfully after
+silently dropping that branch. `RememberNodes` therefore accumulates reached
+nodes through `TLCSet`/`TLCGet`, outside state fingerprints. The postcondition
+`AllNodesReplayed` requires **every recorded prefix** to have a matching
+specification prefix. Reaching one leaf is insufficient. Each prefix may have
+its own existential abstract match.
+
+First collect `build/jpf/nodes.tsv` using v41. Then run these commands from the
+repository root with Java **11** and your existing `tla2tools.jar`. As in earlier steps, these commands assume the jar is in the repository root:
+
+```sh
+export JAVA_HOME=/path/to/jdk-11
+export PATH="$JAVA_HOME/bin:$PATH"
+
+mkdir -p build/jpf/replay-classes
+javac --release 11 -g -cp tla2tools.jar \
+  -d build/jpf/replay-classes impl/jpf/src/BlockingQueueJpfData.java
+
+java -Xmx2g -XX:+UseParallelGC \
+  -Dblockingqueue.jpf.nodes=build/jpf/nodes.tsv \
+  -cp "build/jpf/replay-classes:tla2tools.jar" \
+  tlc2.TLC -workers 1 -noGenerateSpecTE \
+  -metadir build/jpf/replay-states BlockingQueueJpfTrace
+```
+
+The module enforces one worker, `"bfs"` mode, and disabled deadlock checking with
+`ASSUME`s. The [configuration](BlockingQueueJpfTrace.cfg) matches v41's
+thread names and capacity, checks `TypeInv`, and checks the existing `ASpec`
+refinement mapping to the original [BlockingQueue](BlockingQueue.tla) spec.
+Every adapter step consumes an observation; TLC cannot insert unobserved queue
+operations to make the trace fit. The recorded tree's 152 prefixes are all
+accepted, with 161 distinct abstract states due to notification choices.
+
+Try these two changes independently, reverting each before the next:
+
+* **Change the Java implementation.** In `BlockingQueue.put`, replace
+  `waitC.signal()` with `waitC.signalAll()` and collect fresh traces using v41.
+  JPF's checks still pass, but two waiting consumers can now resume after one
+  put. `BlockingQueueSplit.NotifyOther` permits notifying only one, so trace
+  validation rejects these executions. This is a mismatch in notification
+  semantics; the Java queue's `while` guards still handle the extra wakeups.
+* **Change the specification.** With the original Java implementation and its
+  recorded traces, replace `\E x \in ws: ws' = ws \ {x}` in
+  `BlockingQueueSplit.NotifyOther` with
+  `ws' = ws \ {CHOOSE x \in ws : TRUE}`. `CHOOSE` fixes one waiter for each wait
+  set; Java's choice depends on the order threads entered the condition wait.
+  The traces contain both orders, so this stronger specification cannot match
+  them all.
+
+Both experiments make `AllNodesReplayed` false. Acceptance checks the observed
+abstraction of this finite workload; it does not establish arbitrary payloads,
+capacities, interrupts, spurious wakeups, implementation-wide refinement, or
+liveness. A rejection can identify an implementation defect, an observer error,
+or a specification mismatch.
+
+For a real-world application to study further, see
+[TLC's DiskStateQueue JPF trace validation](https://github.com/tlaplus/tlaplus/tree/master/tlatools/org.lamport.tlatools/test-verify/tlc2/tool/queue)
+and its [TLA+ observation adapter](https://github.com/tlaplus/tlaplus/blob/master/tlatools/org.lamport.tlatools/spec/queue/DiskStateQueueMethodTrace.tla).
+It applies the same approach to TLC's disk-backed state queue, including
+background reader/writer threads and modeled file I/O.
+
 ### v41 (Traces): Log Java executions with a JPF listener.
 
 JPF can also observe the executions it explores. A
