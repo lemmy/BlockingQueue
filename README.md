@@ -13,6 +13,226 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v42 (Traces): Validate JPF execution prefixes against the specification.
+
+The listener from v41 records what the Java queue does. Now TLC checks whether
+those observations can be explained by the existing
+[BlockingQueueSplit](BlockingQueueSplit.tla) specification.
+[BlockingQueueJpfData](impl/jpf/src/BlockingQueueJpfData.java) reads `nodes.tsv`
+and overrides three operators in [its TLA+ module](BlockingQueueJpfData.tla):
+`JpfNodeCount`, `JpfChildren(node)`, and `JpfEvent(node)`. The Java code supplies
+tree data only; queue transitions are still defined in TLA+.
+
+[BlockingQueueJpfTrace](BlockingQueueJpfTrace.tla) extends `BlockingQueueSplit`
+with a cursor `node`, initially zero. Each step chooses a recorded child, matches
+its observation to an enabled specification action, and advances the cursor:
+
+| Observation | Matching specification action |
+| --- | --- |
+| `put` by producer `p` | `Put(p, p)` with space in the buffer |
+| `take.p1` / `take.p2` by consumer `c` | `Get(c)`, requiring the recorded value at `Head(buffer)` |
+| `wait` | The full-buffer branch of `Put`, or empty-buffer branch of `Get` |
+| `resume` | Stuttering, requiring the thread outside the abstract wait sets |
+
+As in the earlier trace-validation examples, non-determinism fills gaps in the
+log: `signal()` does not identify its chosen waiter in our observations. The
+specification chooses one, constrained by later resumes. Java signals before
+appending/removing under the same lock; no other queue observation can intervene,
+so the adapter combines these effects in the specification's `Put`/`Get` action.
+
+An impossible observation disables its replay branch. With deadlock checking
+disabled for finite endpoints, TLC could otherwise finish successfully after
+silently dropping that branch. `RememberNodes` therefore accumulates reached
+nodes through `TLCSet`/`TLCGet`, outside state fingerprints. The postcondition
+`AllNodesReplayed` requires **every recorded prefix** to have a matching
+specification prefix. Reaching one leaf is insufficient. Each prefix may have
+its own existential abstract match.
+
+First collect `build/jpf/nodes.tsv` using v41. Then run these commands from the
+repository root with Java **11** and your existing `tla2tools.jar`. As in earlier steps, these commands assume the jar is in the repository root:
+
+```sh
+export JAVA_HOME=/path/to/jdk-11
+export PATH="$JAVA_HOME/bin:$PATH"
+
+mkdir -p build/jpf/replay-classes
+javac --release 11 -g -cp tla2tools.jar \
+  -d build/jpf/replay-classes impl/jpf/src/BlockingQueueJpfData.java
+
+java -Xmx2g -XX:+UseParallelGC \
+  -Dblockingqueue.jpf.nodes=build/jpf/nodes.tsv \
+  -cp "build/jpf/replay-classes:tla2tools.jar" \
+  tlc2.TLC -workers 1 -noGenerateSpecTE \
+  -metadir build/jpf/replay-states BlockingQueueJpfTrace
+```
+
+The module enforces one worker, `"bfs"` mode, and disabled deadlock checking with
+`ASSUME`s. The [configuration](BlockingQueueJpfTrace.cfg) matches v41's
+thread names and capacity, checks `TypeInv`, and checks the existing `ASpec`
+refinement mapping to the original [BlockingQueue](BlockingQueue.tla) spec.
+Every adapter step consumes an observation; TLC cannot insert unobserved queue
+operations to make the trace fit. The recorded tree's 152 prefixes are all
+accepted, with 161 distinct abstract states due to notification choices.
+
+Try these two changes independently, reverting each before the next:
+
+* **Change the Java implementation.** In `BlockingQueue.put`, replace
+  `waitC.signal()` with `waitC.signalAll()` and collect fresh traces using v41.
+  JPF's checks still pass, but two waiting consumers can now resume after one
+  put. `BlockingQueueSplit.NotifyOther` permits notifying only one, so trace
+  validation rejects these executions. This is a mismatch in notification
+  semantics; the Java queue's `while` guards still handle the extra wakeups.
+* **Change the specification.** With the original Java implementation and its
+  recorded traces, replace `\E x \in ws: ws' = ws \ {x}` in
+  `BlockingQueueSplit.NotifyOther` with
+  `ws' = ws \ {CHOOSE x \in ws : TRUE}`. `CHOOSE` fixes one waiter for each wait
+  set; Java's choice depends on the order threads entered the condition wait.
+  The traces contain both orders, so this stronger specification cannot match
+  them all.
+
+Both experiments make `AllNodesReplayed` false. Acceptance checks the observed
+abstraction of this finite workload; it does not establish arbitrary payloads,
+capacities, interrupts, spurious wakeups, implementation-wide refinement, or
+liveness. A rejection can identify an implementation defect, an observer error,
+or a specification mismatch.
+
+For a real-world application to study further, see
+[TLC's DiskStateQueue JPF trace validation](https://github.com/tlaplus/tlaplus/tree/master/tlatools/org.lamport.tlatools/test-verify/tlc2/tool/queue)
+and its [TLA+ observation adapter](https://github.com/tlaplus/tlaplus/blob/master/tlatools/org.lamport.tlatools/spec/queue/DiskStateQueueMethodTrace.tla).
+It applies the same approach to TLC's disk-backed state queue, including
+background reader/writer threads and modeled file I/O.
+
+### v41 (Traces): Log Java executions with a JPF listener.
+
+JPF can also observe the executions it explores. A
+[listener](impl/jpf/src/org/kuppe/jpf/BlockingQueueListener.java) records queue
+operations without adding logging calls or trace variables to the implementation.
+It uses method callbacks at these boundaries:
+
+| Observation | Boundary |
+| --- | --- |
+| `put` | Normal return from `append(e)` |
+| `take.p1` / `take.p2` | Normal return from `head()`, retaining the returned producer name |
+| `wait` | Entry to `ConditionObject.await()` inside `put` or `take` |
+| `resume` | Normal return from `await()`, after lock reacquisition |
+
+The queue's lock prevents other queue operations from interleaving between
+signaling and the corresponding append/removal. Method callbacks avoid duplicate
+observations when JPF reexecutes an instruction after a scheduling choice. The
+listener inspects the current stack to identify queue calls; it keeps no separate
+per-thread observer state.
+
+Logging every callback to one flat file would concatenate different executions
+as JPF backtracks. Instead,
+[TraceRecorder](impl/jpf/src/org/kuppe/jpf/TraceRecorder.java) collects a shared
+prefix tree outside JPF's program state.
+It saves the current prefix at each DFS depth and restores it on backtracking.
+Equal `(parent, thread, action)` edges share a node. Prefixes ending at matched
+states are retained even though the Java execution has not terminated.
+
+With Java **11**, run these commands from the repository root. The JPF runtime
+and defaults are included under `impl/jpf/`. Compile the workload and listener
+separately: the listener runs in the host JVM; only the workload and queue belong
+on JPF's modeled classpath.
+
+```sh
+export JAVA_HOME=/path/to/jdk-11
+export PATH="$JAVA_HOME/bin:$PATH"
+
+mkdir -p build/jpf/classes build/jpf/listener-classes
+rm -f build/jpf/nodes.tsv
+javac --release 11 -g -d build/jpf/classes \
+  impl/src/org/kuppe/BlockingQueue.java \
+  impl/jpf/src/org/kuppe/jpf/BlockingQueueWorkload.java
+javac --release 11 -g -cp impl/jpf/lib/jpf.jar -d build/jpf/listener-classes \
+  impl/jpf/src/org/kuppe/jpf/TraceRecorder.java \
+  impl/jpf/src/org/kuppe/jpf/BlockingQueueListener.java
+
+java -Xmx2g -Dblockingqueue.jpf.nodes=build/jpf/nodes.tsv \
+  -cp "build/jpf/listener-classes:impl/jpf/lib/jpf.jar" gov.nasa.jpf.JPF \
+  +site=impl/jpf/jpf.properties \
+  +classpath="$PWD/build/jpf/classes" \
+  +listener=org.kuppe.jpf.BlockingQueueListener \
+  impl/jpf/BlockingQueue.jpf
+
+head build/jpf/nodes.tsv
+```
+
+The TSV header is `parent<TAB>thread<TAB>action`. Each following row defines a
+child node, numbered from one; node zero is the empty history. Follow a node's
+parent links back to zero to reconstruct its observation prefix. This records
+event labels, thread identities, and returned producer names, rather than queue
+heap snapshots or every Java instruction.
+
+TSV avoids CSV quoting rules if a thread name or action contains a comma. The
+recorder rejects tabs and newlines in fields, allowing simple splitting on tabs.
+
+For the supplied workload, a run recorded 152 prefixes. Its first rows were:
+
+```text
+parent	thread	action
+0	p1	put
+1	p2	wait
+2	c1	take.p1
+3	p2	resume
+4	p2	put
+5	c2	take.p2
+3	c2	wait
+```
+
+The two rows with parent `3` represent alternative continuations after `c1`
+removes `p1`'s value: either `p2` resumes or `c2` waits on the empty queue.
+
+The recorder exports only after a completed, error-free, unconstrained
+depth-first search. A failed or limited search must not leave a fresh tree, so
+the commands remove stale output before starting. The workload, scheduling
+reductions, and state-matching limits from v40 still apply. These observations
+will be input to later trace validation; this step collects them only.
+
+### v40 (JPF): Verify Java executions with Java PathFinder.
+
+The earlier trace-validation chapters sampled executions using the operating
+system's scheduler. [Java PathFinder (JPF)](https://github.com/javapathfinder/jpf-core)
+instead explores scheduling choices directly in the Java implementation, checking
+for deadlocks, uncaught exceptions, and assertion failures.
+
+First, remove the JFR events and console wait logging from
+[BlockingQueue.java](impl/src/org/kuppe/BlockingQueue.java). The instrumentation
+used in v19–v21 remains available in those earlier tutorial commits. Compile the
+cleaned implementation together with a small
+[workload](impl/jpf/src/org/kuppe/jpf/BlockingQueueWorkload.java): two producers,
+two consumers, capacity one, and one operation per thread. Each producer puts its
+name; each consumer asserts that its returned value is non-null. The main thread
+joins all workers. Unlike `App`, this workload is finite and has no random sleeps.
+
+Run these commands from the repository root with Java **11**. The example
+includes JPF 8's runtime, modeled classes, and defaults under `impl/jpf/`.
+
+```sh
+export JAVA_HOME=/path/to/jdk-11
+export PATH="$JAVA_HOME/bin:$PATH"
+
+mkdir -p build/jpf/classes
+javac --release 11 -g -d build/jpf/classes \
+  impl/src/org/kuppe/BlockingQueue.java \
+  impl/jpf/src/org/kuppe/jpf/BlockingQueueWorkload.java
+
+java -Xmx2g -cp impl/jpf/lib/jpf.jar gov.nasa.jpf.JPF \
+  +site=impl/jpf/jpf.properties \
+  +classpath="$PWD/build/jpf/classes" \
+  impl/jpf/BlockingQueue.jpf
+```
+
+The bundled defaults locate `impl/jpf/lib/jpf-classes.jar`. See
+[the dependency notes](impl/jpf/lib/README.md) for the pinned version and license.
+
+The [configuration](impl/jpf/BlockingQueue.jpf) enables the checks explicitly and
+uses depth-first search with state matching, the ordinary scheduler, and no search
+limit. A completed run should report `no errors detected` and `constraints=0`.
+This verifies the configured workload under JPF's scheduling reductions and state
+matching; it does not establish arbitrary inputs, capacities, spurious wakeups,
+interrupt handling, or starvation freedom.
+
 ### v39 (Statistics): Sweep (P,C,B) configurations to measure consumer over- and under-provisioning of BlockingQueuePoisonApple.
 
 A first pass at collecting empirical statistics from `BlockingQueuePoisonApple` and turning them into plots, in three pieces:
