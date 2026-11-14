@@ -13,6 +13,39 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v42 (Traces): Validate public queue histories against the specification.
+
+[BlockingQueueJpfTrace](BlockingQueueJpfTrace.tla) reads the CBOR tree and matches
+it against [BlockingQueueSplit](BlockingQueueSplit.tla). TLC chooses a legal `Put` or `Get`
+between each invocation and response: a linearizability check on these
+histories. `AllNodesReplayed` requires **every recorded prefix** to match;
+an impossible response cannot silently discard a branch.
+
+After v41, run from the repository root with Java **11**, `tla2tools.jar`, and a
+`CommunityModules.jar` containing the CBOR module:
+
+```sh
+java -Xmx2g -XX:+UseParallelGC \
+  -cp "tla2tools.jar:CommunityModules.jar" \
+  tlc2.TLC -workers 1 -noGenerateSpecTE \
+  -metadir build/jpf/replay-states BlockingQueueJpfTrace
+```
+
+All 662 prefixes should be accepted. The module enforces one worker, BFS, and
+disabled deadlock checking; the configuration also checks the existing `ASpec`
+refinement mapping to [BlockingQueue](BlockingQueue.tla).
+
+Try these changes independently; both make `AllNodesReplayed` false:
+
+* **Java:** Make `take()` return `"p1"` immediately for `c1`, without removing an
+  item. Recompile with v40's `javac` command, recollect using v41, and replay.
+* **Specification:** With the original Java traces, replace `buffer' = Tail(buffer)`
+  in the successful branch of `BlockingQueueSplit.Get` with `UNCHANGED buffer`.
+
+For further study, see the real-world
+[DiskStateQueue JPF trace validation](https://github.com/tlaplus/tlaplus/tree/master/tlatools/org.lamport.tlatools/test-verify/tlc2/tool/queue)
+and its [TLA+ adapter](https://github.com/tlaplus/tlaplus/blob/master/tlatools/org.lamport.tlatools/spec/queue/DiskStateQueueMethodTrace.tla).
+
 ### v41 (Traces): Record public queue calls with a JPF listener.
 
 The [listener](impl/jpf/src/org/kuppe/jpf/BlockingQueueListener.java) observes
