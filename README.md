@@ -13,6 +13,32 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v43 (Traces): Record internal queue operations with a JPF listener.
+
+[BlockingQueueListener](impl/jpf/src/org/kuppe/jpf/BlockingQueueListener.java)
+extends the API observations with `append`/`head` returns and condition
+`wait`/`resume` events. These expose where queue operations take effect and how
+waiting threads resume.
+
+Using the classes from v41, recompile the listener and collect the extended tree:
+
+```sh
+rm -f build/jpf/internal-nodes.cbor
+javac --release 11 -g -cp "build/jpf/listener-classes:impl/jpf/lib/*" \
+  -d build/jpf/listener-classes \
+  impl/jpf/src/org/kuppe/jpf/BlockingQueueListener.java
+
+java -Xmx2g -Dblockingqueue.jpf.nodes=build/jpf/internal-nodes.cbor \
+  -cp "build/jpf/listener-classes:impl/jpf/lib/*" gov.nasa.jpf.JPF \
+  +site=impl/jpf/jpf.properties \
+  +classpath="$PWD/build/jpf/classes" \
+  +listener=org.kuppe.jpf.BlockingQueueListener \
+  impl/jpf/BlockingQueue.jpf
+```
+
+Expect 2,316 prefixes. The API tree from v41 remains available for its separate
+validation.
+
 ### v42 (Traces): Validate public queue histories against the specification.
 
 [BlockingQueueJpfTrace](BlockingQueueJpfTrace.tla) reads the CBOR tree and matches
