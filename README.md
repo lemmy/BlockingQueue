@@ -13,6 +13,35 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v41 (Traces): Record public queue calls with a JPF listener.
+
+The [listener](impl/jpf/src/org/kuppe/jpf/BlockingQueueListener.java) observes
+public `put`/`take` invocations and returns, including arguments and results.
+[TraceRecorder](impl/jpf/src/org/kuppe/jpf/TraceRecorder.java) preserves their
+prefixes across JPF backtracking and exports the tree as CBOR; its class
+comment explains the collection technique.
+
+Using Java **11** and the workload classes compiled in v40, compile the host
+listener with the bundled Jackson CBOR jars, then collect the observations:
+
+```sh
+mkdir -p build/jpf/listener-classes
+rm -f build/jpf/nodes.cbor
+javac --release 11 -g -cp "impl/jpf/lib/*" -d build/jpf/listener-classes \
+  impl/jpf/src/org/kuppe/jpf/TraceRecorder.java \
+  impl/jpf/src/org/kuppe/jpf/BlockingQueueListener.java
+
+java -Xmx2g -Dblockingqueue.jpf.nodes=build/jpf/nodes.cbor \
+  -cp "build/jpf/listener-classes:impl/jpf/lib/*" gov.nasa.jpf.JPF \
+  +site=impl/jpf/jpf.properties \
+  +classpath="$PWD/build/jpf/classes" \
+  +listener=org.kuppe.jpf.BlockingQueueListener \
+  impl/jpf/BlockingQueue.jpf
+```
+
+A successful, unconstrained run records 662 prefixes, including prefixes that
+end inside a call when JPF encounters an already visited program state.
+
 ### v40 (JPF): Verify Java executions with Java PathFinder.
 
 Where v19–v21 rely on executions that happen to be logged during testing, JPF
