@@ -13,6 +13,34 @@ This tutorial is work in progress. More chapters will be added in the future. In
 
 --------------------------------------------------------------------------
 
+### v44 (Traces): Validate internal operations against the split queue specification.
+
+[BlockingQueueJpfTrace](BlockingQueueJpfTrace.tla) extends v42's
+checks: `append`/`head` observations now determine when `Put`/`Get` occur, and
+`wait`/`resume` constrain the specification's notification choices. Each public
+return must match its helper's operation and result.
+
+Replay v43's tree with Java **11** and the TLC/CommunityModules jars from v42:
+
+```sh
+java -Xmx2g -XX:+UseParallelGC \
+  -cp "tla2tools.jar:CommunityModules.jar" \
+  tlc2.TLC -workers 1 -noGenerateSpecTE \
+  -metadir build/jpf/internal-replay-states BlockingQueueJpfTrace
+```
+
+All 2,316 prefixes should be accepted. Try these changes independently; both
+make `AllNodesReplayed` false:
+
+* **Java:** Replace `waitC.signal()` with `waitC.signalAll()` in `put()`. Recompile
+  with v40's `javac` command and recollect using v43. The public API histories
+  remain valid, but internal validation detects multiple consumers resuming
+  after one put.
+* **Specification:** With the original Java traces, replace
+  `\E x \in ws: ws' = ws \ {x}` in `BlockingQueueSplit.NotifyOther` with
+  `ws' = ws \ {CHOOSE x \in ws : TRUE}`. This fixes one waiter per wait set,
+  conflicting with the observed waiting orders.
+
 ### v43 (Traces): Record internal queue operations with a JPF listener.
 
 [BlockingQueueListener](impl/jpf/src/org/kuppe/jpf/BlockingQueueListener.java)
@@ -23,12 +51,12 @@ waiting threads resume.
 Using the classes from v41, recompile the listener and collect the extended tree:
 
 ```sh
-rm -f build/jpf/internal-nodes.cbor
+rm -f build/jpf/nodes.cbor
 javac --release 11 -g -cp "build/jpf/listener-classes:impl/jpf/lib/*" \
   -d build/jpf/listener-classes \
   impl/jpf/src/org/kuppe/jpf/BlockingQueueListener.java
 
-java -Xmx2g -Dblockingqueue.jpf.nodes=build/jpf/internal-nodes.cbor \
+java -Xmx2g -Dblockingqueue.jpf.nodes=build/jpf/nodes.cbor \
   -cp "build/jpf/listener-classes:impl/jpf/lib/*" gov.nasa.jpf.JPF \
   +site=impl/jpf/jpf.properties \
   +classpath="$PWD/build/jpf/classes" \
@@ -36,8 +64,7 @@ java -Xmx2g -Dblockingqueue.jpf.nodes=build/jpf/internal-nodes.cbor \
   impl/jpf/BlockingQueue.jpf
 ```
 
-Expect 2,316 prefixes. The API tree from v41 remains available for its separate
-validation.
+Expect 2,316 prefixes, replacing v41's API-only recording.
 
 ### v42 (Traces): Validate public queue histories against the specification.
 

@@ -54,8 +54,8 @@ PublicEvent(t, a) ==
           /\ pending' = [pending EXCEPT ![t] = ""]
     /\ UNCHANGED vars
 
-\* Each invoked call may linearize once, before its matching public response.
-\* Only successful Put/Get branches are used: API traces expose no waiting sets.
+\* Successful Put/Get steps occur at append/head observations, before the
+\* matching public response.
 LinearizePut(t, value) ==
     /\ t \in Producers
     /\ value \in Data
@@ -73,16 +73,36 @@ LinearizeTake(t) ==
 
 TraceStep(child) ==
     /\ LET event == JpfEvent(child)
-       IN PublicEvent(event.thread, event.action)
+           t == event.thread
+           a == event.action
+       IN \/ PublicEvent(t, a)
+          \/ \E d \in Data :
+                 /\ a = "append." \o d
+                 /\ LinearizePut(t, d)
+          \/ /\ t \in Consumers
+             /\ buffer # <<>>
+             /\ a = "head." \o Head(buffer)
+             /\ LinearizeTake(t)
+          \/ /\ a = "wait"
+             /\ \/ /\ t \in Producers
+                   /\ Len(buffer) = BufCapacity
+                   /\ \E d \in Data :
+                          /\ pending[t] = "put.call." \o d
+                          /\ Put(t, d)
+                \/ /\ t \in Consumers
+                   /\ pending[t] = "take.call"
+                   /\ buffer = <<>>
+                   /\ Get(t)
+             /\ UNCHANGED pending
+          \/ /\ a = "resume"
+             /\ t \in RunningThreads
+             /\ pending[t] \in CallEvents
+             /\ UNCHANGED <<vars, pending>>
     /\ node' = child
 
-\* The queue operation can occur anywhere between invocation and response,
-\* including between observations from overlapping calls on other threads.
-TraceNext ==
-    \/ \E child \in JpfChildren(node): TraceStep(child)
-    \/ /\ \/ \E t \in Producers, value \in Data: LinearizePut(t, value)
-          \/ \E t \in Consumers: LinearizeTake(t)
-       /\ UNCHANGED node
+\* Every step consumes an observation; no hidden queue step can justify a
+\* response without its matching append/head event.
+TraceNext == \E child \in JpfChildren(node): TraceStep(child)
 
 \* Every recorded prefix needs some matching abstract execution. An impossible
 \* response otherwise just disables its branch when deadlock checking is off.
